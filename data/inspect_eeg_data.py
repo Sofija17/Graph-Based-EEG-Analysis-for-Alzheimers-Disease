@@ -1,27 +1,25 @@
-import mne
 import matplotlib.pyplot as plt
-import os
+import mne
 
 # Патека до derivatives верзија на субјект 1
 subject_id = "sub-001"
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent  # оди 2 нивоа нагоре од notebooks/
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 eeg_path = PROJECT_ROOT / "data" / "raw" / "ds004504" / "derivatives" / subject_id / "eeg" / f"{subject_id}_task-eyesclosed_eeg.set"
 
 raw = mne.io.read_raw_eeglab(eeg_path, preload=True)
 
-# Основни информации
 print(raw.info)
 print("Sampling frequency:", raw.info['sfreq']) # =500 херци, колку мерења во секунда, ново мерење на секои 2 секунди
 print("Времетраење (сек):", raw.n_times / raw.info['sfreq'])
 print("Веќе применети филтри:", raw.info['highpass'], "-", raw.info['lowpass'], "Hz")
 
-# Визуелен преглед - проверка дека изгледа "чисто"
+# Визуелен преглед (проверка дека изгледа "чисто")
 raw.plot(duration=10, n_channels=19, scalings='auto')
 plt.show()
 
-# PSD - проверка дека нема повеќе 50Hz шум
+# PSD (проверка дека нема повеќе 50Hz шум)
 raw.compute_psd(fmax=60).plot()
 plt.show()
 
@@ -36,6 +34,7 @@ print("Број на епохи/сегменти:", len(epochs))
 print("Облик на податоците:", epochs.get_data().shape)
 
 # --- Дефинирање на frequency bands ---
+#TODO move this to config.py
 FREQ_BANDS = {
     "delta": (0.5, 4.0),
     "theta": (4.0, 8.0),

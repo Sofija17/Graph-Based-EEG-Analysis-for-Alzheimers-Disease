@@ -33,7 +33,16 @@ def load_subject_raw(subject_id, use_derivatives=True):
     raw = mne.io.read_raw_eeglab(eeg_path, preload=True, verbose=False)
     return raw
 
-
+# TODO: fix make_fixed_length_epochs()
+# Тековно сече фиксни 4-сек прозорци
+# без да ги почитува "boundary" annotations во сигналот (местата каде
+# авторите отстраниле артефакти и го "залепиле" сигналот назад)
+# Ова значи дека НЕКОИ епохи може вештачки да комбинираат два физички
+# несоседни временски делови во еден "лажно непрекинат" прозорец.
+#
+# Поправка за подобра верзија: додади reject_by_annotation=True во
+# make_fixed_length_epochs() повикот - ова автоматски ќе ги отфрли
+# епохите што преклопуваат преку boundary точка.
 def epoch_raw(raw, duration=None, overlap=None):
     """
     Сегментира continuous EEG сигнал во кратки сегмемти со фиксна должина.
@@ -59,7 +68,7 @@ def epoch_raw(raw, duration=None, overlap=None):
     return epochs
 
 
-def load_and_epoch(subject_id, use_derivatives=True):
+def load_and_epoch_subject(subject_id, use_derivatives=True):
     """
     Комбинирана функција: вчитува + epoch-ира еден субјект во еден чекор.
 
@@ -73,7 +82,7 @@ def load_and_epoch(subject_id, use_derivatives=True):
 
 
 if __name__ == "__main__":
-    #Testing: 
+    #Testing:
     test_subject = "sub-001"
-    epochs = load_and_epoch(test_subject)
-    print(f"{test_subject}: {len(epochs)} епохи, облик = {epochs.get_data().shape}")
+    epochs = load_and_epoch_subject(test_subject)
+    print(f"{test_subject}: {len(epochs)} segments, shape = {epochs.get_data().shape}")

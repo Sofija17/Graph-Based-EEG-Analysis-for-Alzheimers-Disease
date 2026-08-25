@@ -16,6 +16,7 @@ REFERENCE = "average"
 
 AMPLITUDE_THRESHOLD = 150e-6
 
+#TODO maybe change later in the final phase to check for better results
 EPOCH_DURATION = 4.0
 EPOCH_OVERLAP = 0.0
 

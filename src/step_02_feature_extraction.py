@@ -1,6 +1,6 @@
 """
 Пресметка на qEEG features (relative band power: delta, theta, alpha, beta)
-за секоja епоха, за секој канал.
+за секоja епоха, за секој канал
 
 Логика:
   1. Пресметај PSD (Power Spectral Density) за секоја епоха/канал
@@ -22,7 +22,7 @@ import config
 
 def compute_psd(epochs, fmin=0.5, fmax=30.0):
     """
-    Пресметува Power Spectral Density за секоја епоха и канал.
+    Пресметува Power Spectral Density за секоја епоха и канал
 
     Враќа
     -----
@@ -37,7 +37,7 @@ def compute_psd(epochs, fmin=0.5, fmax=30.0):
 
 def compute_band_power(psd_data, freqs, band_range):
     """
-    Собира моќност во определен frequency опсег.
+    Собира моќност во определен frequency опсег
 
     Параметри
     ---------
@@ -82,8 +82,8 @@ def extract_band_powers(epochs, bands=None):
 
 def band_powers_to_feature_matrix(band_powers, bands=None):
     """
-    Го конвертира речникот од band_powers во еден 3D тензор,
-    погоден за node features во граф.
+    Го конвертира речникот од band_powers во тензор,
+    погоден за node features во граф
 
     Параметри
     ---------
@@ -107,7 +107,7 @@ def compute_relative_power(feature_matrix):
 
     Ова е важно затоа што апсолутните вредности на моќност може да
     варираат многу меѓу субјекти (заради разлики во импеданса на
-    електродите, дебелина на черепот, итн.) - релативната моќност
+    електродите, дебелина на черепот, итн.) ,релативната моќност
     е поробусна споредбена мерка.
 
     Параметри
@@ -124,11 +124,11 @@ def compute_relative_power(feature_matrix):
 
 
 if __name__ == "__main__":
-    # Брз тест - бара preprocessing.py да работи прво
-    from preprocessing import load_and_epoch
+    # Test
+    from step_01_preprocessing import load_and_epoch_subject
 
     test_subject = "sub-001"
-    epochs = load_and_epoch(test_subject)
+    epochs = load_and_epoch_subject(test_subject)
 
     band_powers = extract_band_powers(epochs)
     for band_name, arr in band_powers.items():
@@ -139,4 +139,5 @@ if __name__ == "__main__":
 
     relative_matrix = compute_relative_power(feature_matrix)
     print(f"Пример - епоха 0, канал 0 (relative power): {relative_matrix[0, 0]}")
-    print(f"Сума (треба да е ~1.0): {relative_matrix[0, 0].sum()}")
+    #Sumata treba da e ~1.0
+    print(f"Сума : {relative_matrix[0, 0].sum()}")
