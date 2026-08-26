@@ -6,6 +6,8 @@
 
 import mne
 import config
+import warnings
+from helpers.load_participants import get_ad_cn_subjects
 
 def load_subject_raw(subject_id, use_derivatives=True):
     """
@@ -33,16 +35,6 @@ def load_subject_raw(subject_id, use_derivatives=True):
     raw = mne.io.read_raw_eeglab(eeg_path, preload=True, verbose=False)
     return raw
 
-# TODO: fix make_fixed_length_epochs()
-# Тековно сече фиксни 4-сек прозорци
-# без да ги почитува "boundary" annotations во сигналот (местата каде
-# авторите отстраниле артефакти и го "залепиле" сигналот назад)
-# Ова значи дека НЕКОИ епохи може вештачки да комбинираат два физички
-# несоседни временски делови во еден "лажно непрекинат" прозорец.
-#
-# Поправка за подобра верзија: додади reject_by_annotation=True во
-# make_fixed_length_epochs() повикот - ова автоматски ќе ги отфрли
-# епохите што преклопуваат преку boundary точка.
 def epoch_raw(raw, duration=None, overlap=None):
     """
     Сегментира continuous EEG сигнал во кратки сегмемти со фиксна должина.
@@ -62,9 +54,25 @@ def epoch_raw(raw, duration=None, overlap=None):
     duration = duration or config.EPOCH_DURATION
     overlap = overlap if overlap is not None else config.EPOCH_OVERLAP
 
+    if len(raw.annotations) > 0:
+        annotations = raw.annotations.copy()
+        descriptions = annotations.description.astype(str)
+
+        boundary_mask = descriptions == "boundary"
+        annotations.description[boundary_mask] = "bad_boundary"
+
+        raw = raw.copy()
+        raw.set_annotations(annotations)
+
     epochs = mne.make_fixed_length_epochs(
-        raw, duration=duration, overlap=overlap, preload=True, verbose=False
+        raw,
+        duration=duration,
+        overlap=overlap,
+        preload=True,
+        reject_by_annotation=True,
+        verbose=False,
     )
+
     return epochs
 
 
@@ -82,7 +90,39 @@ def load_and_epoch_subject(subject_id, use_derivatives=True):
 
 
 if __name__ == "__main__":
-    #Testing:
-    test_subject = "sub-001"
-    epochs = load_and_epoch_subject(test_subject)
-    print(f"{test_subject}: {len(epochs)} segments, shape = {epochs.get_data().shape}")
+
+    warnings.filterwarnings(
+        "ignore",
+        message="The data contains 'boundary' events.*"
+    )
+
+    subjects = get_ad_cn_subjects()
+
+    for subject_id, label in subjects:
+        raw = load_subject_raw(subject_id)
+
+        old_epochs = mne.make_fixed_length_epochs(
+            raw,
+            duration=config.EPOCH_DURATION,
+            overlap=config.EPOCH_OVERLAP,
+            preload=True,
+            reject_by_annotation=False,
+            verbose=False,
+        )
+
+        new_epochs = epoch_raw(raw)
+
+        removed = len(old_epochs) - len(new_epochs)
+
+        label_name = "AD" if label == 1 else "CN"
+        descriptions = set(raw.annotations.description.astype(str))
+
+        print(
+            f"{subject_id} ({label_name}) | "
+            f"annotations={len(raw.annotations)} | "
+            f"types={descriptions} | "
+            f"old={len(old_epochs)} | "
+            f"new={len(new_epochs)} | "
+            f"removed={removed}"
+        )
+
