@@ -146,6 +146,44 @@ def subject_wise_train_validation_split(
 
 
 # ============================================================
+# SUBJECT-BALANCED GRAPH WEIGHTS
+# ============================================================
+
+def attach_subject_balanced_weights(graphs):
+    """
+    Додава sample_weight на секој graph така што секој subject има
+    приближно еднаков вкупен придонес во loss-от.
+
+    Без ова, subject со 300 сегменти влијае околу 4x повеќе од subject
+    со 75 сегменти, иако реално имаме една label-а по subject.
+    """
+
+    subject_counts = defaultdict(int)
+
+    for graph in graphs:
+        subject_counts[graph.subject_id] += 1
+
+    n_graphs = len(graphs)
+    n_subjects = len(subject_counts)
+
+    for graph in graphs:
+        weight = (
+            n_graphs
+            / (
+                n_subjects
+                * subject_counts[graph.subject_id]
+            )
+        )
+
+        graph.sample_weight = torch.tensor(
+            [weight],
+            dtype=torch.float
+        )
+
+    return graphs
+
+
+# ============================================================
 # TRAINING
 # ============================================================
 
@@ -162,7 +200,8 @@ def train_one_epoch(
 
     model.train()
 
-    total_loss = 0.0
+    total_weighted_loss = 0.0
+    total_weight = 0.0
 
     for batch in loader:
 
@@ -177,19 +216,31 @@ def train_one_epoch(
             batch.batch
         )
 
-        loss = criterion(
+        loss_per_graph = criterion(
             out,
             batch.y
         )
 
+        weights = batch.sample_weight.view(-1)
+
+        loss = (
+            loss_per_graph
+            * weights
+        ).sum() / weights.sum()
+
         loss.backward()
         optimizer.step()
 
-        total_loss += (
-            loss.item() * batch.num_graphs
+        total_weighted_loss += (
+            loss_per_graph.detach()
+            * weights
+        ).sum().item()
+
+        total_weight += (
+            weights.sum().item()
         )
 
-    return total_loss / len(loader.dataset)
+    return total_weighted_loss / total_weight
 
 
 # ============================================================
@@ -210,7 +261,8 @@ def evaluate_loss(
 
     model.eval()
 
-    total_loss = 0.0
+    total_weighted_loss = 0.0
+    total_weight = 0.0
 
     with torch.no_grad():
 
@@ -225,16 +277,23 @@ def evaluate_loss(
                 batch.batch
             )
 
-            loss = criterion(
+            loss_per_graph = criterion(
                 out,
                 batch.y
             )
 
-            total_loss += (
-                loss.item() * batch.num_graphs
+            weights = batch.sample_weight.view(-1)
+
+            total_weighted_loss += (
+                loss_per_graph
+                * weights
+            ).sum().item()
+
+            total_weight += (
+                weights.sum().item()
             )
 
-    return total_loss / len(loader.dataset)
+    return total_weighted_loss / total_weight
 
 
 # ============================================================
@@ -319,7 +378,8 @@ def evaluate_segment_level(
 def evaluate_subject_level(
     model,
     graphs,
-    device
+    device,
+    threshold=0.5
 ):
     """
     За секој segment graph:
@@ -327,8 +387,8 @@ def evaluate_subject_level(
 
     Потоа ги групираме според subject_id:
 
-        mean P(AD) >= 0.5 -> AD
-        mean P(AD) < 0.5  -> CN
+        mean P(AD) >= threshold -> AD
+        mean P(AD) < threshold  -> CN
     """
 
     model.eval()
@@ -438,7 +498,7 @@ def evaluate_subject_level(
 
         prediction = (
             1
-            if mean_ad_probability >= 0.5
+            if mean_ad_probability >= threshold
             else 0
         )
 
@@ -490,7 +550,117 @@ def evaluate_subject_level(
         "labels": subject_labels,
         "predictions": subject_predictions,
         "probabilities": subject_probabilities,
+        "threshold": threshold,
         "subjects": subjects,
+    }
+
+
+# ============================================================
+# VALIDATION THRESHOLD SELECTION
+# ============================================================
+
+def choose_threshold_by_youdens_j(labels, probabilities):
+    """
+    Избира subject-level threshold користејќи Youden's J:
+
+        J = sensitivity + specificity - 1
+
+    Threshold-от се избира само од validation subjects, а потоа се
+    применува еднаш на test subjects.
+    """
+
+    labels = np.asarray(labels)
+    probabilities = np.asarray(probabilities)
+
+    candidate_thresholds = np.unique(
+        probabilities
+    )
+
+    candidate_thresholds = np.concatenate(
+        [
+            np.array([0.0]),
+            candidate_thresholds,
+            np.array([1.0]),
+        ]
+    )
+
+    best_threshold = 0.5
+    best_j = -float("inf")
+    best_sensitivity = 0.0
+    best_specificity = 0.0
+
+    for threshold in candidate_thresholds:
+
+        predictions = (
+            probabilities >= threshold
+        ).astype(int)
+
+        true_positives = np.sum(
+            (labels == 1)
+            & (predictions == 1)
+        )
+
+        false_negatives = np.sum(
+            (labels == 1)
+            & (predictions == 0)
+        )
+
+        true_negatives = np.sum(
+            (labels == 0)
+            & (predictions == 0)
+        )
+
+        false_positives = np.sum(
+            (labels == 0)
+            & (predictions == 1)
+        )
+
+        sensitivity = (
+            true_positives
+            / (true_positives + false_negatives)
+            if (true_positives + false_negatives) > 0
+            else 0.0
+        )
+
+        specificity = (
+            true_negatives
+            / (true_negatives + false_positives)
+            if (true_negatives + false_positives) > 0
+            else 0.0
+        )
+
+        youdens_j = (
+            sensitivity
+            + specificity
+            - 1.0
+        )
+
+        is_better = (
+            youdens_j
+            > best_j + 1e-12
+        )
+
+        is_tie_closer_to_default = (
+            abs(youdens_j - best_j) <= 1e-12
+            and abs(threshold - 0.5)
+            < abs(best_threshold - 0.5)
+        )
+
+        if (
+            is_better
+            or is_tie_closer_to_default
+        ):
+
+            best_threshold = float(threshold)
+            best_j = float(youdens_j)
+            best_sensitivity = float(sensitivity)
+            best_specificity = float(specificity)
+
+    return {
+        "threshold": best_threshold,
+        "youdens_j": best_j,
+        "sensitivity": best_sensitivity,
+        "specificity": best_specificity,
     }
 
 
@@ -758,6 +928,14 @@ def train_fold(
         f"{len(test_graphs)}"
     )
 
+    attach_subject_balanced_weights(
+        train_graphs
+    )
+
+    attach_subject_balanced_weights(
+        val_graphs
+    )
+
     # --------------------------------------------------------
     # DataLoaders
     # --------------------------------------------------------
@@ -802,7 +980,9 @@ def train_fold(
     )
 
     criterion = (
-        torch.nn.CrossEntropyLoss()
+        torch.nn.CrossEntropyLoss(
+            reduction="none"
+        )
     )
 
     # --------------------------------------------------------
@@ -958,6 +1138,41 @@ def train_fold(
     )
 
     # --------------------------------------------------------
+    # VALIDATION THRESHOLD
+    # --------------------------------------------------------
+
+    val_subject_metrics = (
+        evaluate_subject_level(
+            model,
+            val_graphs,
+            device
+        )
+    )
+
+    threshold_info = (
+        choose_threshold_by_youdens_j(
+            val_subject_metrics["labels"],
+            val_subject_metrics["probabilities"]
+        )
+    )
+
+    subject_threshold = (
+        threshold_info["threshold"]
+    )
+
+    print(
+        "\nValidation threshold "
+        "chosen by Youden's J:"
+    )
+
+    print(
+        f"threshold={subject_threshold:.3f} | "
+        f"J={threshold_info['youdens_j']:.3f} | "
+        f"sensitivity={threshold_info['sensitivity']:.3f} | "
+        f"specificity={threshold_info['specificity']:.3f}"
+    )
+
+    # --------------------------------------------------------
     # TEST - дури сега
     # --------------------------------------------------------
 
@@ -973,7 +1188,8 @@ def train_fold(
         evaluate_subject_level(
             model,
             test_graphs,
-            device
+            device,
+            threshold=subject_threshold
         )
     )
 
@@ -997,7 +1213,8 @@ def train_fold(
     )
 
     print(
-        "\nTEST Subject-level:"
+        "\nTEST Subject-level "
+        f"(threshold={subject_threshold:.3f}):"
     )
 
     print(
@@ -1022,6 +1239,8 @@ def train_fold(
     return {
         "best_epoch": best_epoch,
         "best_val_loss": best_val_loss,
+        "subject_threshold": subject_threshold,
+        "threshold_info": threshold_info,
         "segment_metrics": segment_metrics,
         "subject_metrics": subject_metrics,
     }
@@ -1082,6 +1301,7 @@ def main():
     fold_f1_scores = []
     fold_roc_auc_scores = []
     fold_best_epochs = []
+    fold_thresholds = []
 
     all_subject_labels = []
     all_subject_predictions = []
@@ -1117,6 +1337,10 @@ def main():
 
         fold_best_epochs.append(
             result["best_epoch"]
+        )
+
+        fold_thresholds.append(
+            result["subject_threshold"]
         )
 
         fold_accuracies.append(
@@ -1164,6 +1388,10 @@ def main():
         fold_best_epochs
     )
 
+    fold_thresholds = np.array(
+        fold_thresholds
+    )
+
     print(
         f"\n{'=' * 70}"
     )
@@ -1182,6 +1410,8 @@ def main():
             f"Fold {i + 1}: "
             f"best_epoch="
             f"{fold_best_epochs[i]:3d} | "
+            f"threshold="
+            f"{fold_thresholds[i]:.3f} | "
             f"Accuracy="
             f"{fold_accuracies[i]:.3f} | "
             f"F1="
@@ -1220,6 +1450,16 @@ def main():
     print(
         f"Average best epoch: "
         f"{fold_best_epochs.mean():.1f}"
+    )
+
+    print(
+        f"Thresholds: "
+        f"{fold_thresholds.round(3).tolist()}"
+    )
+
+    print(
+        f"Average threshold: "
+        f"{fold_thresholds.mean():.3f}"
     )
 
     # ========================================================
