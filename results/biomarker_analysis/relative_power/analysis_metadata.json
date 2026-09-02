@@ -1,0 +1,37 @@
+{
+  "analysis_unit": "subject",
+  "n_subjects": 65,
+  "n_ad": 36,
+  "n_cn": 29,
+  "bands": [
+    "delta",
+    "theta",
+    "alpha",
+    "beta"
+  ],
+  "ratios": {
+    "theta_alpha_ratio": [
+      "theta",
+      "alpha"
+    ],
+    "delta_alpha_ratio": [
+      "delta",
+      "alpha"
+    ],
+    "slow_fast_ratio": [
+      [
+        "delta",
+        "theta"
+      ],
+      [
+        "alpha",
+        "beta"
+      ]
+    ]
+  },
+  "statistical_test": "two-sided Mann-Whitney U",
+  "effect_size": "rank-biserial correlation; positive means AD higher",
+  "multiple_testing": "Benjamini-Hochberg FDR across all channel-biomarker tests",
+  "fdr_alpha": 0.05,
+  "significant_tests": 78
+}

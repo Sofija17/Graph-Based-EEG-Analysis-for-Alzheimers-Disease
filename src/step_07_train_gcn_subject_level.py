@@ -40,8 +40,14 @@ Pipeline:
 
 from collections import defaultdict
 from pathlib import Path
+import argparse
 import copy
+import csv
+from datetime import datetime
+import json
+import platform
 import random
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -53,6 +59,9 @@ from sklearn.metrics import (
     roc_auc_score,
     confusion_matrix,
     classification_report,
+    precision_score,
+    recall_score,
+    roc_curve,
 )
 from sklearn.model_selection import train_test_split
 
@@ -97,6 +106,8 @@ def set_seed(seed):
 
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
 
 # ============================================================
@@ -530,6 +541,18 @@ def evaluate_subject_level(
         subject_probabilities
     )
 
+    tn, fp, fn, tp = confusion_matrix(
+        subject_labels,
+        subject_predictions,
+        labels=[0, 1]
+    ).ravel()
+
+    specificity = (
+        tn / (tn + fp)
+        if (tn + fp) > 0
+        else 0.0
+    )
+
     return {
         "accuracy": accuracy_score(
             subject_labels,
@@ -538,8 +561,23 @@ def evaluate_subject_level(
 
         "f1": f1_score(
             subject_labels,
-            subject_predictions
+            subject_predictions,
+            zero_division=0
         ),
+
+        "precision": precision_score(
+            subject_labels,
+            subject_predictions,
+            zero_division=0
+        ),
+
+        "recall": recall_score(
+            subject_labels,
+            subject_predictions,
+            zero_division=0
+        ),
+
+        "specificity": specificity,
 
         "roc_auc": roc_auc_score(
             subject_labels,
@@ -672,7 +710,8 @@ def plot_losses(
     train_losses,
     val_losses,
     best_epoch,
-    fold
+    fold,
+    output_dir=None
 ):
     """
     Црта train loss и validation loss за секој training epoch.
@@ -717,15 +756,12 @@ def plot_losses(
     plt.grid(True)
 
     # results/training_curves/
-    project_root = (
-        Path(__file__).resolve().parent.parent
-    )
-
-    output_dir = (
-        project_root
-        / "results"
-        / "training_curves"
-    )
+    if output_dir is None:
+        output_dir = (
+            Path(__file__).resolve().parent.parent
+            / "results"
+            / "training_curves"
+        )
 
     output_dir.mkdir(
         parents=True,
@@ -808,7 +844,8 @@ def train_fold(
     fold,
     development_graphs,
     test_graphs,
-    device
+    device,
+    output_dir=None
 ):
     """
     Еден fold:
@@ -1134,7 +1171,12 @@ def train_fold(
         train_losses,
         val_losses,
         best_epoch,
-        fold
+        fold,
+        output_dir=(
+            output_dir / "training_curves"
+            if output_dir is not None
+            else None
+        )
     )
 
     # --------------------------------------------------------
@@ -1243,6 +1285,11 @@ def train_fold(
         "threshold_info": threshold_info,
         "segment_metrics": segment_metrics,
         "subject_metrics": subject_metrics,
+        "train_losses": train_losses,
+        "val_losses": val_losses,
+        "train_subjects": sorted(train_subjects),
+        "validation_subjects": sorted(val_subjects),
+        "test_subjects": sorted(test_subjects),
     }
 
 
@@ -1250,7 +1297,172 @@ def train_fold(
 # MAIN
 # ============================================================
 
+def _json_value(value):
+    """Convert Path/numpy values to JSON-safe Python values."""
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, (tuple, list)):
+        return [_json_value(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): _json_value(item) for key, item in value.items()}
+    return value
+
+
+def get_experiment_config(device, connectivity_method=None, graphs_file="all_graphs.pt"):
+    """Snapshot parameters needed to reproduce the reference run."""
+    connectivity_method = connectivity_method or config.CONNECTIVITY_METHOD
+    return {
+        "experiment": f"{connectivity_method}_reference",
+        "connectivity_method": connectivity_method,
+        "graphs_file": graphs_file,
+        "top_k_edges": config.TOP_K_EDGES,
+        "frequency_bands": config.FREQ_BANDS,
+        "epoch_duration_seconds": config.EPOCH_DURATION,
+        "epoch_overlap_seconds": config.EPOCH_OVERLAP,
+        "gcn_hidden_dim": config.GCN_HIDDEN_DIM,
+        "gcn_num_layers_config": config.GCN_NUM_LAYERS,
+        "learning_rate": config.LEARNING_RATE,
+        "maximum_epochs": config.NUM_EPOCHS,
+        "batch_size": config.BATCH_SIZE,
+        "random_seed": config.RANDOM_SEED,
+        "outer_folds": 5,
+        "validation_size": VAL_SIZE,
+        "early_stopping_patience": EARLY_STOPPING_PATIENCE,
+        "early_stopping_min_delta": MIN_DELTA,
+        "subject_aggregation": "mean_ad_probability",
+        "threshold_selection": "validation_youdens_j",
+        "subject_balanced_loss": True,
+        "device": str(device),
+        "python_version": sys.version,
+        "platform": platform.platform(),
+        "torch_version": torch.__version__,
+        "numpy_version": np.__version__,
+    }
+
+
+def write_csv(path, rows, fieldnames):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def plot_oof_results(labels, predictions, probabilities, output_dir):
+    """Save the final subject-level confusion matrix, ROC and scores."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    matrix = confusion_matrix(labels, predictions, labels=[0, 1])
+    fig, ax = plt.subplots(figsize=(5, 4))
+    image = ax.imshow(matrix, cmap="Blues")
+    for row in range(2):
+        for column in range(2):
+            ax.text(column, row, matrix[row, column], ha="center", va="center")
+    ax.set_xticks([0, 1], labels=["CN", "AD"])
+    ax.set_yticks([0, 1], labels=["CN", "AD"])
+    ax.set_xlabel("Predicted label")
+    ax.set_ylabel("True label")
+    ax.set_title("Out-of-fold subject confusion matrix")
+    fig.colorbar(image, ax=ax)
+    fig.tight_layout()
+    fig.savefig(output_dir / "oof_confusion_matrix.png", dpi=150)
+    plt.close(fig)
+
+    false_positive_rate, true_positive_rate, _ = roc_curve(labels, probabilities)
+    auc = roc_auc_score(labels, probabilities)
+    fig, ax = plt.subplots(figsize=(6, 5))
+    ax.plot(false_positive_rate, true_positive_rate, label=f"ROC-AUC = {auc:.3f}")
+    ax.plot([0, 1], [0, 1], linestyle="--", color="gray", label="Chance")
+    ax.set_xlabel("False-positive rate")
+    ax.set_ylabel("True-positive rate")
+    ax.set_title("Out-of-fold subject ROC curve")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(output_dir / "oof_roc_curve.png", dpi=150)
+    plt.close(fig)
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    cn_probabilities = probabilities[labels == 0]
+    ad_probabilities = probabilities[labels == 1]
+    rng = np.random.default_rng(config.RANDOM_SEED)
+    ax.scatter(
+        rng.normal(0, 0.04, size=len(cn_probabilities)),
+        cn_probabilities,
+        alpha=0.8,
+        label="CN"
+    )
+    ax.scatter(
+        rng.normal(1, 0.04, size=len(ad_probabilities)),
+        ad_probabilities,
+        alpha=0.8,
+        label="AD"
+    )
+    ax.set_xticks([0, 1], labels=["CN", "AD"])
+    ax.set_ylabel("Out-of-fold P(AD)")
+    ax.set_title("Subject-level predicted probabilities")
+    ax.set_ylim(-0.02, 1.02)
+    ax.grid(True, axis="y", alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(output_dir / "oof_probability_distribution.png", dpi=150)
+    plt.close(fig)
+
+
+def save_experiment_results(output_dir, experiment_config, fold_rows,
+                            prediction_rows, history_rows, split_rows,
+                            overall_metrics):
+    """Persist every result required for later fair ablations."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    with (output_dir / "experiment_config.json").open("w", encoding="utf-8") as file:
+        json.dump(_json_value(experiment_config), file, indent=2, ensure_ascii=False)
+
+    with (output_dir / "summary.json").open("w", encoding="utf-8") as file:
+        json.dump(_json_value(overall_metrics), file, indent=2, ensure_ascii=False)
+
+    write_csv(output_dir / "fold_metrics.csv", fold_rows, list(fold_rows[0]))
+    write_csv(
+        output_dir / "oof_subject_predictions.csv",
+        prediction_rows,
+        list(prediction_rows[0])
+    )
+    write_csv(output_dir / "training_history.csv", history_rows, list(history_rows[0]))
+    write_csv(output_dir / "fold_subject_splits.csv", split_rows, list(split_rows[0]))
+
+    labels = np.array([row["true_label"] for row in prediction_rows])
+    predictions = np.array([row["prediction"] for row in prediction_rows])
+    probabilities = np.array([row["ad_probability"] for row in prediction_rows])
+    plot_oof_results(labels, predictions, probabilities, output_dir / "figures")
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Train the subject-level GCN.")
+    parser.add_argument(
+        "--graphs-file",
+        default="all_graphs.pt",
+        help="Graph dataset filename inside data/graphs.",
+    )
+    parser.add_argument(
+        "--connectivity-method",
+        choices=("pearson", "spearman", "coherence"),
+        default=None,
+        help="Method label saved in experiment metadata.",
+    )
+    parser.add_argument(
+        "--experiment-name",
+        default=None,
+        help="Results subdirectory name (default: <method>_reference).",
+    )
+    return parser.parse_args()
+
+
 def main():
+
+    args = parse_args()
+    connectivity_method = args.connectivity_method or config.CONNECTIVITY_METHOD
+    experiment_name = args.experiment_name or f"{connectivity_method}_reference"
 
     set_seed(
         config.RANDOM_SEED
@@ -1266,11 +1478,14 @@ def main():
         f"Користиме device: {device}\n"
     )
 
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = config.RESULTS_DIR / experiment_name / run_id
+
     # --------------------------------------------------------
     # Load graphs
     # --------------------------------------------------------
 
-    graphs = load_graphs()
+    graphs = load_graphs(args.graphs_file)
 
     print(
         f"Вкупно графови: "
@@ -1306,6 +1521,10 @@ def main():
     all_subject_labels = []
     all_subject_predictions = []
     all_subject_probabilities = []
+    fold_rows = []
+    prediction_rows = []
+    history_rows = []
+    split_rows = []
 
     # --------------------------------------------------------
     # 5 folds
@@ -1328,7 +1547,8 @@ def main():
             fold,
             development_graphs,
             test_graphs,
-            device
+            device,
+            output_dir=output_dir
         )
 
         subject_metrics = (
@@ -1367,6 +1587,63 @@ def main():
         all_subject_probabilities.extend(
             subject_metrics["probabilities"]
         )
+
+        fold_rows.append({
+            "fold": fold,
+            "best_epoch": result["best_epoch"],
+            "best_validation_loss": result["best_val_loss"],
+            "threshold": result["subject_threshold"],
+            "validation_youdens_j": result["threshold_info"]["youdens_j"],
+            "validation_sensitivity": result["threshold_info"]["sensitivity"],
+            "validation_specificity": result["threshold_info"]["specificity"],
+            "accuracy": subject_metrics["accuracy"],
+            "precision": subject_metrics["precision"],
+            "recall_sensitivity": subject_metrics["recall"],
+            "specificity": subject_metrics["specificity"],
+            "f1": subject_metrics["f1"],
+            "roc_auc": subject_metrics["roc_auc"],
+            "segment_accuracy": result["segment_metrics"]["accuracy"],
+            "segment_f1": result["segment_metrics"]["f1"],
+            "segment_roc_auc": result["segment_metrics"]["roc_auc"],
+            "n_train_subjects": len(result["train_subjects"]),
+            "n_validation_subjects": len(result["validation_subjects"]),
+            "n_test_subjects": len(result["test_subjects"]),
+        })
+
+        for epoch, (train_loss, val_loss) in enumerate(
+            zip(result["train_losses"], result["val_losses"]), start=1
+        ):
+            history_rows.append({
+                "fold": fold,
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "validation_loss": val_loss,
+                "is_best_epoch": int(epoch == result["best_epoch"]),
+            })
+
+        for split_name in ("train", "validation", "test"):
+            for subject_id in result[f"{split_name}_subjects"]:
+                split_rows.append({
+                    "fold": fold,
+                    "split": split_name,
+                    "subject_id": subject_id,
+                })
+
+        for subject_id, label, prediction, probability in zip(
+            subject_metrics["subject_ids"],
+            subject_metrics["labels"],
+            subject_metrics["predictions"],
+            subject_metrics["probabilities"],
+        ):
+            prediction_rows.append({
+                "fold": fold,
+                "subject_id": subject_id,
+                "true_label": int(label),
+                "prediction": int(prediction),
+                "ad_probability": float(probability),
+                "threshold": result["subject_threshold"],
+                "n_segments": len(subject_metrics["subjects"][subject_id]["probabilities"]),
+            })
 
     # ========================================================
     # CV SUMMARY
@@ -1505,6 +1782,23 @@ def main():
         all_subject_probabilities
     )
 
+    overall_precision = precision_score(
+        all_subject_labels,
+        all_subject_predictions,
+        zero_division=0
+    )
+    overall_recall = recall_score(
+        all_subject_labels,
+        all_subject_predictions,
+        zero_division=0
+    )
+    overall_tn, overall_fp, overall_fn, overall_tp = confusion_matrix(
+        all_subject_labels,
+        all_subject_predictions,
+        labels=[0, 1]
+    ).ravel()
+    overall_specificity = overall_tn / (overall_tn + overall_fp)
+
     print(
         f"Subjects evaluated: "
         f"{len(all_subject_labels)}"
@@ -1549,6 +1843,44 @@ def main():
             zero_division=0
         )
     )
+
+    overall_metrics = {
+        "subjects_evaluated": len(all_subject_labels),
+        "accuracy": overall_accuracy,
+        "precision": overall_precision,
+        "recall_sensitivity": overall_recall,
+        "specificity": overall_specificity,
+        "f1": overall_f1,
+        "roc_auc": overall_roc_auc,
+        "confusion_matrix": [[int(overall_tn), int(overall_fp)],
+                             [int(overall_fn), int(overall_tp)]],
+        "fold_mean": {
+            metric: float(np.mean([row[metric] for row in fold_rows]))
+            for metric in ("accuracy", "precision", "recall_sensitivity",
+                           "specificity", "f1", "roc_auc")
+        },
+        "fold_standard_deviation": {
+            metric: float(np.std([row[metric] for row in fold_rows]))
+            for metric in ("accuracy", "precision", "recall_sensitivity",
+                           "specificity", "f1", "roc_auc")
+        },
+    }
+
+    save_experiment_results(
+        output_dir=output_dir,
+        experiment_config=get_experiment_config(
+            device,
+            connectivity_method=connectivity_method,
+            graphs_file=args.graphs_file,
+        ),
+        fold_rows=fold_rows,
+        prediction_rows=prediction_rows,
+        history_rows=history_rows,
+        split_rows=split_rows,
+        overall_metrics=overall_metrics,
+    )
+
+    print(f"\nКомплетните {connectivity_method} резултати се зачувани во: {output_dir}")
 
 
 if __name__ == "__main__":

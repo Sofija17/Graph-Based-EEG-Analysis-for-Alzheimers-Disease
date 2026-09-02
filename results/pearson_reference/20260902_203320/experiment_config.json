@@ -1,0 +1,43 @@
+{
+  "experiment": "pearson_reference",
+  "connectivity_method": "pearson",
+  "top_k_edges": 0.3,
+  "frequency_bands": {
+    "delta": [
+      0.5,
+      4.0
+    ],
+    "theta": [
+      4.0,
+      8.0
+    ],
+    "alpha": [
+      8.0,
+      13.0
+    ],
+    "beta": [
+      13.0,
+      30.0
+    ]
+  },
+  "epoch_duration_seconds": 4.0,
+  "epoch_overlap_seconds": 0.0,
+  "gcn_hidden_dim": 32,
+  "gcn_num_layers_config": 2,
+  "learning_rate": 0.001,
+  "maximum_epochs": 100,
+  "batch_size": 16,
+  "random_seed": 42,
+  "outer_folds": 5,
+  "validation_size": 0.2,
+  "early_stopping_patience": 15,
+  "early_stopping_min_delta": 0.0001,
+  "subject_aggregation": "mean_ad_probability",
+  "threshold_selection": "validation_youdens_j",
+  "subject_balanced_loss": true,
+  "device": "cpu",
+  "python_version": "3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "torch_version": "2.14.0+cpu",
+  "numpy_version": "2.5.2"
+}

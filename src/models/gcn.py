@@ -40,7 +40,7 @@ class GCN(torch.nn.Module):
         """
         x : node features, облик (n_nodes_во_batch, num_node_features)
         edge_index : облик (2, n_edges_во_batch)
-        edge_weight : облик (n_edges_во_batch,) - Pearson correlation тежини
+        edge_weight : облик (n_edges_во_batch,) - connectivity magnitude тежини
         batch : облик (n_nodes_во_batch,) - кој јазол на кој граф припаѓа
         """
         # Message passing (direct neighbours)

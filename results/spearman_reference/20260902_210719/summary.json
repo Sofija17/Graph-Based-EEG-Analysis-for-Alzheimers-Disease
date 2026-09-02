@@ -1,0 +1,35 @@
+{
+  "subjects_evaluated": 65,
+  "accuracy": 0.7692307692307693,
+  "precision": 0.8,
+  "recall_sensitivity": 0.7777777777777778,
+  "specificity": 0.7586206896551724,
+  "f1": 0.7887323943661971,
+  "roc_auc": 0.7471264367816092,
+  "confusion_matrix": [
+    [
+      22,
+      7
+    ],
+    [
+      8,
+      28
+    ]
+  ],
+  "fold_mean": {
+    "accuracy": 0.7692307692307692,
+    "precision": 0.8522727272727273,
+    "recall_sensitivity": 0.775,
+    "specificity": 0.7666666666666667,
+    "f1": 0.7876767676767678,
+    "roc_auc": 0.8092857142857144
+  },
+  "fold_standard_deviation": {
+    "accuracy": 0.10878565864408424,
+    "precision": 0.18096390215813074,
+    "recall_sensitivity": 0.14794510840862843,
+    "specificity": 0.2905932629027116,
+    "f1": 0.09131313131313133,
+    "roc_auc": 0.1210788615033518
+  }
+}

@@ -34,7 +34,7 @@ def connectivity_matrix_to_edge_list(conn_matrix):
 
     sources = []
     targets = []
-    weights = []
+    signed_weights = []
 
     for i in range(n_channels):
         for j in range(n_channels):
@@ -50,12 +50,13 @@ def connectivity_matrix_to_edge_list(conn_matrix):
                 # јазол - негативни тежини можат да дадат негативен степен
                 # -> sqrt(негативен број) -> NaN. Апсолутна вредност го
                 # спречува ова.
-                weights.append(abs(conn_matrix[i, j]))
+                signed_weights.append(conn_matrix[i, j])
 
     edge_index = torch.tensor([sources, targets], dtype=torch.long)
-    edge_attr = torch.tensor(weights, dtype=torch.float)
+    signed_edge_attr = torch.tensor(signed_weights, dtype=torch.float)
+    edge_attr = signed_edge_attr.abs()
 
-    return edge_index, edge_attr
+    return edge_index, edge_attr, signed_edge_attr
 
 
 def build_graph_for_epoch(node_features, conn_matrix, label):
@@ -78,10 +79,16 @@ def build_graph_for_epoch(node_features, conn_matrix, label):
     torch_geometric.data.Data објект
     """
     x = torch.tensor(node_features, dtype=torch.float)
-    edge_index, edge_attr = connectivity_matrix_to_edge_list(conn_matrix)
+    edge_index, edge_attr, signed_edge_attr = connectivity_matrix_to_edge_list(conn_matrix)
     y = torch.tensor([label], dtype=torch.long)
 
-    graph = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, y=y)
+    graph = Data(
+        x=x,
+        edge_index=edge_index,
+        edge_attr=edge_attr,
+        signed_edge_attr=signed_edge_attr,
+        y=y,
+    )
     return graph
 
 

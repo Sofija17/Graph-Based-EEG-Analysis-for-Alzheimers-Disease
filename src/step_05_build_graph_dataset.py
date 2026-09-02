@@ -5,6 +5,7 @@ pipeline (load -> epoch -> features -> connectivity -> graphs)
 
 """
 
+import argparse
 import time
 import numpy as np
 import torch
@@ -21,7 +22,7 @@ from step_03_compute_connectivity import compute_connectivity_all_epochs, thresh
 from step_04_graph_builder import build_graphs_for_subject
 
 
-def process_subject(subject_id, label):
+def process_subject(subject_id, label, connectivity_method=None):
     """
     Го извршува целиот pipeline за ЕДЕН субјект.
 
@@ -32,6 +33,7 @@ def process_subject(subject_id, label):
     """
     epochs = load_and_epoch_subject(subject_id)
     epochs_data = epochs.get_data()
+    connectivity_method = connectivity_method or config.CONNECTIVITY_METHOD
 
     # Feature extraction
     band_powers = extract_band_powers(epochs)
@@ -39,7 +41,11 @@ def process_subject(subject_id, label):
     feature_matrix = compute_relative_power(feature_matrix)
 
     # Connectivity + threshold  per epoch
-    conn_all = compute_connectivity_all_epochs(epochs_data)
+    conn_all = compute_connectivity_all_epochs(
+        epochs_data,
+        method=connectivity_method,
+        sfreq=float(epochs.info["sfreq"]),
+    )
     conn_all_thresholded = np.array([
         threshold_connectivity(conn_all[i], top_k_percent=config.TOP_K_EDGES)
         for i in range(conn_all.shape[0])
@@ -53,16 +59,19 @@ def process_subject(subject_id, label):
     # субјект во train и test истовремено)
     for g in graphs:
         g.subject_id = subject_id
+        g.connectivity_method = connectivity_method
 
     return graphs
 
 
-def build_full_dataset():
+def build_full_dataset(connectivity_method=None):
     """
     Го извршува process_subject() за СИТЕ AD/CN субјекти со логови
     за прогрес и враќа еден голем список од сите графови.
     """
     subjects = get_ad_cn_subjects()
+    connectivity_method = connectivity_method or config.CONNECTIVITY_METHOD
+    print(f"Connectivity method: {connectivity_method}")
     print(f"Вкупно субјекти за обработка: {len(subjects)}\n")
 
     all_graphs = []
@@ -75,7 +84,7 @@ def build_full_dataset():
         print(f"[{idx}/{len(subjects)}] Обработувам {subject_id} ({label_name})...", end=" ")
 
         try:
-            graphs = process_subject(subject_id, label)
+            graphs = process_subject(subject_id, label, connectivity_method)
             all_graphs.extend(graphs)
             print(f"OK - {len(graphs)} графови")
         except Exception as e:
@@ -103,6 +112,19 @@ def save_graphs(graphs, filename="all_graphs.pt"):
     torch.save(graphs, save_path)
     print(f"\nЗачувано во: {save_path}")
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Build an EEG graph dataset.")
+    parser.add_argument(
+        "--connectivity-method",
+        choices=("pearson", "spearman", "coherence"),
+        default=config.CONNECTIVITY_METHOD,
+    )
+    parser.add_argument("--output", default=None, help="Filename inside data/graphs.")
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    graphs = build_full_dataset()
-    save_graphs(graphs)
+    args = parse_args()
+    output = args.output or f"all_graphs_{args.connectivity_method}.pt"
+    graphs = build_full_dataset(args.connectivity_method)
+    save_graphs(graphs, output)

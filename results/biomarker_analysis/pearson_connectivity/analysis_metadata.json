@@ -1,0 +1,15 @@
+{
+  "analysis_unit": "subject",
+  "epoch_aggregation": "compute metric per epoch, then average within subject",
+  "connectivity": "absolute thresholded Pearson weights",
+  "top_k_edges": 0.3,
+  "important_limitation": "correlation sign was discarded during graph construction",
+  "n_subjects": 65,
+  "n_ad": 36,
+  "n_cn": 29,
+  "statistical_test": "two-sided Mann-Whitney U",
+  "multiple_testing": "Benjamini-Hochberg FDR across all connectivity tests",
+  "fdr_alpha": 0.05,
+  "tests": 43,
+  "significant_tests": 23
+}

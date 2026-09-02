@@ -8,11 +8,21 @@
 
 Правиме ребра меѓу јазлите
 """
-#TODO подоцна да се додаде и друга метрика според која ќе се мери функционална конективност освен Pearsons correlation
 import numpy as np
+from scipy.signal import coherence
+from scipy.stats import rankdata
 
 #TODO посебна пресметка според фреквенциски опсег (алфа, бета, гама, делта) / според друга метрика за корелација (PLV)
-def compute_connectivity_matrix(epoch_data):
+SUPPORTED_CONNECTIVITY_METHODS = ("pearson", "spearman", "coherence")
+
+
+def compute_connectivity_matrix(
+    epoch_data,
+    method="pearson",
+    sfreq=None,
+    fmin=0.5,
+    fmax=30.0,
+):
     """
     Пресметува Pearson correlation матрица за ЕДНА епоха.
 
@@ -28,13 +38,50 @@ def compute_connectivity_matrix(epoch_data):
                 симетрична матрица, вредности меѓу -1 и +1,
                 дијагонала = 1.0
     """
-    # np.corrcoef очекува секој РЕД да е една временска серија -
-    # epoch_data веќе е во тој облик (n_channels, n_times), совршено пасува
-    conn_matrix = np.corrcoef(epoch_data)
-    return conn_matrix
+    method = method.lower()
+    if method not in SUPPORTED_CONNECTIVITY_METHODS:
+        raise ValueError(
+            f"Unsupported connectivity method '{method}'. "
+            f"Choose from {SUPPORTED_CONNECTIVITY_METHODS}."
+        )
+
+    if method == "pearson":
+        return np.corrcoef(epoch_data)
+
+    if method == "spearman":
+        ranked = np.apply_along_axis(rankdata, 1, epoch_data)
+        return np.corrcoef(ranked)
+
+    if sfreq is None:
+        raise ValueError("sfreq is required for coherence connectivity")
+
+    _, n_times = epoch_data.shape
+    nperseg = min(n_times, max(8, int(round(2.0 * sfreq))))
+    # Broadcasting computes every channel pair in one vectorized Welch call:
+    # (channels, 1, times) x (1, channels, times) -> (channels, channels, freqs).
+    frequencies, values = coherence(
+        epoch_data[:, np.newaxis, :],
+        epoch_data[np.newaxis, :, :],
+        fs=sfreq,
+        nperseg=nperseg,
+        axis=-1,
+    )
+    mask = (frequencies >= fmin) & (frequencies < fmax)
+    if not np.any(mask):
+        raise ValueError(f"No coherence frequency bins in [{fmin}, {fmax}) Hz")
+    matrix = values[..., mask].mean(axis=-1)
+    matrix = (matrix + matrix.T) / 2.0
+    np.fill_diagonal(matrix, 1.0)
+    return matrix
 
 
-def compute_connectivity_all_epochs(epochs_data):
+def compute_connectivity_all_epochs(
+    epochs_data,
+    method="pearson",
+    sfreq=None,
+    fmin=0.5,
+    fmax=30.0,
+):
     """
     Пресметува connectivity матрица за СИТЕ епохи одеднаш.
 
@@ -53,11 +100,12 @@ def compute_connectivity_all_epochs(epochs_data):
     all_matrices = np.zeros((n_epochs, n_channels, n_channels))
 
     for i in range(n_epochs):
-        all_matrices[i] = compute_connectivity_matrix(epochs_data[i])
+        all_matrices[i] = compute_connectivity_matrix(
+            epochs_data[i], method=method, sfreq=sfreq, fmin=fmin, fmax=fmax
+        )
 
     return all_matrices
 
-#TODO move the top_k_percent to config.py & maybe change its value?
 def threshold_connectivity(conn_matrix, top_k_percent=0.3):
     """
     Ги задржува само најсилните врски во connectivity матрицата,
