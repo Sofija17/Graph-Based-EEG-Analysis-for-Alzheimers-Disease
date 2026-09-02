@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'EEG–AD Research Dashboard',
-  description: 'Subject-level GCN results and EEG biomarker analysis for Alzheimer’s disease.',
+  title: 'EEG–AD истражувачка контролна табла',
+  description: 'GCN резултати и анализа на EEG биомаркери за Алцхајмерова болест на ниво на испитаник.',
 };
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="mk">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
