@@ -207,6 +207,13 @@ The results should be interpreted as exploratory, not clinical. The main limitat
 
 ## How To Run
 
+For an HTML page with Macedonian descriptions and a short project guide, run the dashboard app from the `dashboard` folder with:
+
+```powershell
+cd dashboard
+npm run dev
+```
+
 Build the graph dataset:
 
 ```powershell
