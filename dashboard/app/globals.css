@@ -130,6 +130,8 @@ h2 {
 .clean-list { display: grid; gap: 0.7rem; color: #475569; line-height: 1.5; }
 .clean-list li { position: relative; padding-left: 1.15rem; }
 .clean-list li::before { content: ''; position: absolute; left: 0; top: 0.6rem; width: 0.35rem; height: 0.35rem; border-radius: 999px; background: #14b8a6; }
+.conclusion-list { color: #ffffff; }
+.conclusion-list li { color: #ffffff; }
 
 :root {
   --background: oklch(0.975 0.008 210);

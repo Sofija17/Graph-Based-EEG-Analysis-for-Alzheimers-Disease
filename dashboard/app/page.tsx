@@ -3,9 +3,7 @@
 import {
   Activity,
   BrainCircuit,
-  FlaskConical,
   Network,
-  ShieldCheck,
   AlertTriangle,
   CheckCircle2,
   CircleHelp,
@@ -166,36 +164,23 @@ export default function Home() {
             <span className="grid size-9 place-items-center rounded-xl bg-teal-400/15 text-teal-300 ring-1 ring-teal-300/25">
               <BrainCircuit className="size-5" />
             </span>
-            <div>
-              <p className="text-sm font-semibold">EEG–AD истражување</p>
-              <p className="text-[11px] text-slate-400">
-                Контролна табла на ниво на испитаник
-              </p>
-            </div>
           </div>
           <nav className="hidden gap-5 text-xs text-slate-300 md:flex">
             <a href="#overview">За проектот</a>
+            <a href="#methodology">Методологија</a>
+            <a href="#validation">Валидација</a>
             <a href="#performance">Перформанси</a>
             <a href="#biomarkers">Биомаркери</a>
-            <a href="#validation">Валидација</a>
-            <a href="#methodology">Методологија</a>
+            <a href="#conclusion">Заклучок</a>
           </nav>
-          <span className="rounded-full bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-300 ring-1 ring-emerald-300/20">
-            Анализата е завршена
-          </span>
         </div>
       </header>
 
       <section className="border-b bg-[#0b2531] text-white">
         <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
           <div className="max-w-3xl">
-            <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[.18em] text-teal-300">
-              <FlaskConical className="size-4" />
-              Граф-базирана EEG анализа
-            </p>
             <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-5xl">
-              Граф-базирана анализа и класификација на Alzheimer’s disease од
-              resting-state EEG функционална конективност
+             Граф-базирана анализа и класификација на Алцхајмерова болест со користење на функционална конективност од resting-state EEG
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
               Проектот проверува дали EEG сигналите и мозочните
@@ -208,12 +193,6 @@ export default function Home() {
               ['Испитаници', '65', '36 AD · 29 CN', BrainCircuit],
               ['EEG графови', '12.826', '19 канали · 4 опсези', Network],
               ['Најдобра точност', '78,5%', 'GCN со кохерентност', Activity],
-              [
-                'Pearson OOF AUC',
-                '0.749',
-                '65 независни предвидувања',
-                ShieldCheck,
-              ],
             ].map(([label, value, detail, Icon]) => (
               <div
                 key={String(label)}
@@ -255,7 +234,7 @@ export default function Home() {
             <Card className="border-teal-200 bg-teal-50/60">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CircleHelp className="size-5 text-teal-700" />
+                  <CircleHelp className="size-5 text-teal-700"/>
                   Истражувачко прашање
                 </CardTitle>
               </CardHeader>
@@ -268,48 +247,151 @@ export default function Home() {
             <Card className="border-blue-200 bg-blue-50/60">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Target className="size-5 text-blue-700" />
+                  <Target className="size-5 text-blue-700"/>
                   Цел на проектот
                 </CardTitle>
               </CardHeader>
               <CardContent className="leading-7 text-slate-700">
-                Да се откријат можни EEG биомаркери за Алцхајмерова болест преку
-                анализа на мозочните ритми и врските меѓу EEG каналите, а потоа
-                тие информации да се употребат за автоматска класификација.
+                Да се идентификуваат потенцијални EEG биомаркери за Алцхајмерова болест
+                преку анализа на спектралните карактеристики и обрасците на функционална
+                конективност со примена на граф-базирано машинско учење.
               </CardContent>
             </Card>
             <Card className="border-amber-200 bg-amber-50/60">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Lightbulb className="size-5 text-amber-700" />
+                  <Lightbulb className="size-5 text-amber-700"/>
                   Краток одговор
                 </CardTitle>
               </CardHeader>
               <CardContent className="leading-7 text-slate-700">
-                <strong>Да.</strong> Најдени се разлики во мозочните ритми и во
+                <strong>Најдени се</strong> разлики во мозочните ритми и во
                 одредени регионални врски. GCN моделот ги разликува групите со
                 најдобра точност од <strong>78,5%</strong>, но резултатот сè уште
                 не е доволен за клиничка дијагноза.
               </CardContent>
             </Card>
           </div>
+        </section>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-slate-900">Најважни поими, едноставно објаснети</h3>
-            <div className="mt-4 grid gap-4 text-sm leading-6 text-slate-700 md:grid-cols-2 lg:grid-cols-4">
-              <p><strong>qEEG карактеристика:</strong> број што кажува колку е застапен одреден мозочен ритам, како алфа или тета.</p>
-              <p><strong>Функционална поврзаност:</strong> мера за тоа колку синхронизирано се менуваат сигналите од два EEG канала.</p>
-              <p><strong>Граф:</strong> мрежа во која каналите се јазли, а нивната поврзаност е претставена со ребра.</p>
-              <p><strong>Биомаркер:</strong> мерлива особина што може да укажува на разлика поврзана со болеста.</p>
-            </div>
-            <div className="mt-5 border-t border-slate-200 pt-5">
-              <h3 className="text-base font-semibold text-slate-900">Како да ги разберете мерките за успешност?</h3>
-              <div className="mt-3 grid gap-4 text-sm leading-6 text-slate-700 md:grid-cols-2 lg:grid-cols-4">
-                <p><strong>Точност:</strong> колкав процент од сите испитаници е правилно класифициран.</p>
-                <p><strong>Сензитивност:</strong> колкав процент од лицата со AD моделот правилно ги препознал.</p>
-                <p><strong>Специфичност:</strong> колкав процент од здравите лица моделот правилно ги препознал.</p>
-                <p><strong>ROC–AUC:</strong> општа способност за раздвојување на групите; 0,5 е случајно, а 1,0 е совршено.</p>
+        <section id="methodology" className="scroll-mt-24">
+          <div className="mb-5">
+            <p className="eyebrow">Методологија</p>
+            <h2>Од EEG снимка до граф-базирана класификација</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-5">
+            {[
+              [
+                '01',
+                'Претпроцесирање',
+                '0,5–45 Hz, просечна референца, епохи од 4 секунди',
+              ],
+              [
+                '02',
+                'Карактеристики на јазлите',
+                'Релативна delta, theta, alpha и beta моќност за секој EEG канал',
+              ],
+              [
+                '03',
+                'Функционална поврзаност ',
+                'Врски меѓу EEG каналите со Pearson, Spearman или coherence; се задржуваат најсилните 30%',
+              ],
+              [
+                '04',
+                'GCN класификација',
+                'Предвидување по EEG епоха и агрегација на AD веројатноста на ниво на испитаник',
+              ],
+              [
+                '05',
+                'Евалуација',
+                '5-fold вкрстена валидација по испитаник, без преклопување меѓу train и test податоците',
+              ],
+            ].map(([n, t, d]) => (
+                <div className="step-card" key={n}>
+                  <span>{n}</span>
+                  <h3>{t}</h3>
+                  <p>{d}</p>
+                </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="validation" className="scroll-mt-24">
+          <div className="mb-5">
+            <h2>Резултати на GCN со Pearson-базирана поврзаност</h2>
+            <p className="section-copy">
+              Во секоја од 5-те поделби моделот се тренира одново на различна група испитаници.
+              На валидациските податоци се избира најдобрата епоха и оптималниот праг за класификација,
+              а потоа моделот се оценува на 13 тест-испитаници кои не биле користени при тренирањето или изборот на
+              праг.
+            </p>
+          </div>
+          <Card>
+            <CardContent className="pt-1">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[720px] text-sm">
+                  <thead>
+                  <tr className="border-b text-left text-xs uppercase tracking-wide text-slate-500">
+                    {[
+                      'Поделба (Fold)',
+                      'Најдобра епоха',
+                      'Праг',
+                      'Accuracy',
+                      'F1',
+                      'ROC–AUC',
+                      'Тест-испитаници',
+                    ].map((x) => (
+                        <th key={x} className="px-4 py-3">
+                          {x}
+                        </th>
+                    ))}
+                  </tr>
+                  </thead>
+                  <tbody>
+                  {folds.map((x) => (
+                      <tr
+                          key={x.fold}
+                          className="border-b border-slate-100 last:border-0"
+                      >
+                        <td className="px-4 py-3 font-semibold">{x.fold}</td>
+                        <td className="px-4 py-3">{x.epoch}</td>
+                        <td className="px-4 py-3 font-mono">
+                          {x.threshold.toFixed(3)}
+                        </td>
+                        <td className="px-4 py-3">{pct(x.accuracy)}</td>
+                        <td className="px-4 py-3">{x.f1.toFixed(3)}</td>
+                        <td className="px-4 py-3">{x.auc.toFixed(3)}</td>
+                        <td className="px-4 py-3">13</td>
+                      </tr>
+                  ))}
+                  </tbody>
+                </table>
               </div>
+            </CardContent>
+          </Card>
+          <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-5 text-sm leading-6 text-blue-950">
+            <strong>Процес на тренирање и тестирање</strong> Секој ред претставува една независна поделба од
+            5-fold cross-validation. Во секоја поделба, различни 13 испитаници се оставаат само за
+            тестирање, додека останатите се користат за тренирање и валидација.
+            Прагот се избира од како резултат од валидациските податоци, наместо секогаш да се користи 0,5.
+            Потоа избраниот модел и праг се применуваат на 13-те тест-испитаници. Accuracy, F1
+            и ROC-AUC покажуваат колку добро моделот се справил со таа конкретна тест-група.
+            Затоа резултатите се разликуваат меѓу поделбите — во секој ред моделот се тестира на различни лица.
+            Конечната проценка на моделот не се зема од една поделба, туку од
+            резултатите на сите пет поделби заедно.
+          </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            <div className="mini-callout">
+              <span>Просечна точност</span>
+              <strong>0.754 ± 0.102</strong>
+            </div>
+            <div className="mini-callout">
+              <span>Просечен F1 резултат</span>
+              <strong>0.775 ± 0.088</strong>
+            </div>
+            <div className="mini-callout">
+              <span>Просечен ROC–AUC</span>
+              <strong>0.809 ± 0.121</strong>
             </div>
           </div>
         </section>
@@ -317,7 +399,7 @@ export default function Home() {
         <section id="performance" className="scroll-mt-24">
           <div className="mb-5">
             <p className="eyebrow">Перформанси на моделот</p>
-            <h2>Споредба на методите за поврзаност</h2>
+            <h2>Споредба на методите за мерење мозочна функционална поврзаност</h2>
             <p className="section-copy">
               Секој метод користи исти поделби на испитаниците, исти почетни
               вредности за случајните операции, исти карактеристики на јазлите
@@ -328,78 +410,65 @@ export default function Home() {
             <Card className="border-0 shadow-sm ring-slate-200">
               <CardHeader>
                 <CardTitle>Резултати од вкрстената валидација</CardTitle>
-                <CardDescription>Резултатите се прикажани во проценти</CardDescription>
               </CardHeader>
               <CardContent>
                 <ChartContainer
-                  config={chartConfig}
-                  className="h-[340px] w-full aspect-auto"
+                    config={chartConfig}
+                    className="h-[340px] w-full aspect-auto"
                 >
                   <BarChart data={methodData}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="method" tickLine={false} axisLine={false} />
+                    <CartesianGrid vertical={false}/>
+                    <XAxis dataKey="method" tickLine={false} axisLine={false}/>
                     <YAxis
-                      domain={[0, 100]}
-                      tickFormatter={(v) => `${v}%`}
-                      tickLine={false}
-                      axisLine={false}
+                        domain={[0, 100]}
+                        tickFormatter={(v) => `${v}%`}
+                        tickLine={false}
+                        axisLine={false}
                     />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
+                    <ChartTooltip content={<ChartTooltipContent/>}/>
+                    <Legend/>
                     <Bar
-                      dataKey="accuracy"
-                      fill="var(--color-accuracy)"
-                      radius={[4, 4, 0, 0]}
-                    />
-                    <Bar
-                      dataKey="sensitivity"
-                      fill="var(--color-sensitivity)"
-                      radius={[4, 4, 0, 0]}
+                        dataKey="accuracy"
+                        fill="var(--color-accuracy)"
+                        radius={[4, 4, 0, 0]}
                     />
                     <Bar
-                      dataKey="specificity"
-                      fill="var(--color-specificity)"
-                      radius={[4, 4, 0, 0]}
+                        dataKey="sensitivity"
+                        fill="var(--color-sensitivity)"
+                        radius={[4, 4, 0, 0]}
                     />
                     <Bar
-                      dataKey="auc"
-                      fill="var(--color-auc)"
-                      radius={[4, 4, 0, 0]}
+                        dataKey="specificity"
+                        fill="var(--color-specificity)"
+                        radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                        dataKey="auc"
+                        fill="var(--color-auc)"
+                        radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
                 </ChartContainer>
                 <div className="mt-5 rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">
-                  <p><strong>Како се чита графикот:</strong> долу се трите начини
-                  на создавање врски меѓу EEG каналите. Висината на столбовите го
-                  покажува процентот на успешност; повисок столб значи подобар резултат.</p>
-                  <p className="mt-2"><strong>Што покажува:</strong> кохерентноста
-                  има највисока точност (78,5%) и најдобро ги препознава здравите
-                  лица (89,7%), но пропушта повеќе лица со AD. Pearson и Spearman
-                  имаат порамномерна сензитивност и специфичност.</p>
+                  <p className="mt-2"><strong>Kохерентноста </strong>
+                    има највисока точност (78,5%) и најдобро ги препознава здравите
+                    лица (89,7%), но пропушта повеќе лица со AD. Pearson и Spearman
+                    имаат порамномерна сензитивност и специфичност.</p>
                 </div>
               </CardContent>
             </Card>
             <Card className="border-0 bg-teal-950 text-white shadow-sm ring-teal-900">
               <CardHeader>
-                <CardTitle className="text-xl">Толкување</CardTitle>
-                <CardDescription className="text-teal-100/65">
-                  Што потврдува споредбата
-                </CardDescription>
+                <CardTitle className="text-xl">Што потврдува споредбата</CardTitle>
               </CardHeader>
               <CardContent className="space-y-5 leading-6 text-teal-50/85">
-                <p>
-                  Способноста за разликување на AD од CN е речиси иста: ROC–AUC,
-                  пресметан врз сите тест-предвидувања, е{' '}
-                  <strong>0,747–0,749</strong> кај сите методи.
-                </p>
-                <p>
-                  Кохерентноста ја зголемува специфичноста на <strong>89,7%</strong>,
-                  но ја намалува AD сензитивноста на <strong>69,4%</strong>.
-                </p>
                 <div className="rounded-xl bg-white/8 p-4 text-sm ring-1 ring-white/10">
-                  <strong className="text-teal-200">Заклучок:</strong> повисоката
-                  точност кај кохерентноста не докажува општо подобар класификатор.
-                  Спектралните карактеристики на јазлите носат постабилен сигнал.
+                  <strong className="text-teal-200">Заклучок:</strong> Резултатите покажуваат дека
+                  Coherence има највисока точност и специфичност, но пониска сензитивност,
+                  односно подобро ги препознава здравите испитаници, но пропушта повеќе AD случаи.
+                  Pearson и Spearman даваат побалансирани резултати. Бидејќи ROC-AUC е речиси
+                  идентичен кај сите три методи, околу 0.75, не можеме да кажеме дека еден метод
+                  за функционална конективност е јасно супериорен.
                 </div>
               </CardContent>
             </Card>
@@ -407,14 +476,13 @@ export default function Home() {
           <div className="mt-6 grid gap-5 md:grid-cols-3">
             <figure className="figure-card">
               <img
-                src="/results/oof_roc_curve.png"
-                alt="Pearson ROC крива од вкрстената валидација"
+                  src="/results/oof_roc_curve.png"
+                  alt="Pearson ROC крива од вкрстената валидација"
               />
               <figcaption>
-                ROC крива на ниво на испитаник · референтен Pearson модел
               </figcaption>
               <div className="px-4 pb-4 text-sm leading-6 text-slate-600">
-                <strong>Што гледаме?</strong> Сината линија ја покажува способноста
+                Сината линија ја покажува способноста
                 на моделот да ги разликува AD и CN при различни прагови. Сивата
                 дијагонала е случајно погодување. Сината линија е над неа, а
                 ROC–AUC од 0,749 значи умерено добра, но не совршена поделба.
@@ -422,27 +490,26 @@ export default function Home() {
             </figure>
             <figure className="figure-card">
               <img
-                src="/results/oof_confusion_matrix.png"
-                alt="Pearson матрица на конфузија"
+                  src="/results/oof_confusion_matrix.png"
+                  alt="Pearson матрица на конфузија"
               />
-              <figcaption>21 точни CN, 28 точни AD, вкупно 16 грешки</figcaption>
+              <figcaption></figcaption>
               <div className="px-4 pb-4 text-sm leading-6 text-slate-600">
-                <strong>Како се чита?</strong> Редовите се вистинската група, а
-                колоните се предвидувањето на моделот. Точно се препознаени 21
+                Точно се препознаени 21
                 здрав и 28 AD испитаници. Погрешно се класифицирани 8 здрави како
                 AD и 8 AD како здрави — вкупно 49 од 65 се точни.
               </div>
             </figure>
             <figure className="figure-card">
               <img
-                src="/results/oof_probability_distribution.png"
-                alt="Предвидени AD веројатности по група"
+                  src="/results/oof_probability_distribution.png"
+                  alt="Предвидени AD веројатности по група"
               />
               <figcaption>
                 Распределба на AD веројатностите од тест-предвидувањата
               </figcaption>
               <div className="px-4 pb-4 text-sm leading-6 text-slate-600">
-                <strong>Како се чита?</strong> Секоја точка е еден испитаник.
+                Секоја точка е еден испитаник.
                 Повисока точка значи дека моделот дал поголема веројатност за AD.
                 Портокаловите AD точки најчесто се повисоко од сините CN точки,
                 но има преклопување; токму таму настануваат грешките.
@@ -473,15 +540,17 @@ export default function Home() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <EvidenceTable rows={spectral} />
+                    <EvidenceTable rows={spectral}/>
                     <div className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
                       <p><strong>Што значат колоните?</strong> „AD просек“ и „CN
-                      просек“ се просечните вредности во двете групи. Позитивен
-                      ефект значи повисока вредност кај AD, а негативен ефект —
-                      пониска вредност кај AD.</p>
-                      <p><strong>Главен резултат:</strong> лицата со AD имаат
-                      повисок однос тета/алфа и пониска релативна алфа-моќност,
-                      особено во задниот дел на главата кај O2 и T5.</p>
+                        просек“ се просечните вредности во двете групи. Позитивен
+                        ефект значи повисока вредност кај AD, а негативен ефект —
+                        пониска вредност кај AD.</p>
+                      <p><strong>Главен резултат:</strong> лицата со AD имаат повисок однос тета/алфа
+                        и пониска релативна алфа-моќност, особено во задниот дел на главата кај O2 и T5.
+                        Тоа значи дека нивната мозочна активност е побавна во споредба со здравите испитаници.
+                        Овие разлики се појавуваат доволно јасно за да можат да се користат како важни
+                        EEG карактеристики при разликување на лица со Алцхајмерова болест од здрави лица.</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -494,14 +563,12 @@ export default function Home() {
                   </CardHeader>
                   <CardContent>
                     <img
-                      className="mx-auto max-h-[430px] object-contain"
-                      src="/results/topomap_alpha.png"
-                      alt="Мапа на скалпот со ефектите на релативната алфа-моќност"
+                        className="mx-auto max-h-[430px] object-contain"
+                        src="/results/topomap_alpha.png"
+                        alt="Мапа на скалпот со ефектите на релативната алфа-моќност"
                     />
                     <div className="mt-4 text-sm leading-6 text-slate-600">
-                      <strong>Како се чита мапата?</strong> Кругот е поглед на
-                      главата одозгора: носот е горе, а задниот дел е долу. Сината
-                      боја значи дека алфа-моќноста е пониска кај AD. Потемно сино
+                      Сината боја значи дека алфа-моќноста е пониска кај AD. Потемно сино
                       значи поголема разлика. Заокружените електроди имаат
                       статистички потврдена разлика по FDR корекцијата.
                     </div>
@@ -511,31 +578,39 @@ export default function Home() {
               <div className="mt-5 grid gap-5 lg:grid-cols-2">
                 <figure className="figure-card">
                   <img
-                    src="/results/topomap_theta_alpha.png"
-                    alt="Мапа на скалпот за односот тета–алфа"
+                      src="/results/topomap_theta_alpha.png"
+                      alt="Мапа на скалпот за односот тета–алфа"
                   />
                   <figcaption>
                     Односот тета/алфа е доследно повисок кај AD
                   </figcaption>
                   <div className="px-4 pb-4 text-sm leading-6 text-slate-600">
-                    <strong>Значење:</strong> црвените области покажуваат дека кај
-                    AD има релативно повеќе бавна тета активност во однос на алфа
-                    активноста. Ова е најизразено во задните EEG канали.
+                    <strong>Значење:</strong> Црвените области покажуваат дека кај лицата со AD
+                    односот тета/алфа е повисок во споредба со здравите испитаници.
+                    Тоа значи дека во EEG сигналот има релативно поголемо учество на
+                    бавната тета активност во однос на алфа активноста. Ваквата промена укажува
+                    на општо забавување на мозочната електрична активност, што е поизразено кај
+                    лицата со Алцхајмерова болест. Најсилните разлики се забележуваат во задните
+                    EEG канали, што покажува дека токму во тие региони спектралните промени меѓу
+                    AD и CN се најнагласени.
                   </div>
                 </figure>
                 <figure className="figure-card">
                   <img
-                    src="/results/heatmap_theta_alpha.png"
-                    alt="Топлинска мапа по канали за односот тета–алфа"
+                      src="/results/heatmap_theta_alpha.png"
+                      alt="Топлинска мапа по канали за односот тета–алфа"
                   />
                   <figcaption>
                     Позитивни ефекти низ сите 19 канали; најсилни кај O2 и T5
                   </figcaption>
                   <div className="px-4 pb-4 text-sm leading-6 text-slate-600">
-                    <strong>Како се чита?</strong> Секоја колона е EEG канал.
-                    Потопла боја и поголем позитивен број значат повисок однос
-                    тета/алфа кај AD. Ѕвездичка означува дека разликата останува
-                    значајна и по корекција за повеќекратни тестирања.
+                    Секоја колона претставува еден EEG канал. Бојата и бројот во колоната покажуваат колку
+                    се разликува односот тета/алфа меѓу лицата со AD и здравите испитаници.
+                    Потопла боја и поголема позитивна вредност значат дека кај лицата со AD
+                    има повисок тета/алфа однос на тој канал, односно релативно повеќе побавна
+                    EEG активност. Колку е бројот поголем, толку е поизразена разликата меѓу двете групи.
+                    Ѕвездичката означува дека разликата е статистички значајна и останува значајна
+                    и по FDR корекцијата, што значи дека е помала веројатноста забележаната разлика да е случајна.
                   </div>
                 </figure>
               </div>
@@ -551,15 +626,17 @@ export default function Home() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <EvidenceTable rows={connectivity} />
+                    <EvidenceTable rows={connectivity}/>
                     <div className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
                       <p><strong>Јачина на јазол</strong> кажува колку силно е еден
-                      EEG канал поврзан со останатите. <strong>Тежинско
-                      кластерирање</strong> кажува дали соседните канали формираат
-                      тесно поврзана локална група.</p>
-                      <p><strong>Главен резултат:</strong> најсилните разлики се
-                      регионални — особено кај O2, T6, F7 и F4 — а не еднакво
-                      распоредени низ целиот мозок.</p>
+                        EEG канал поврзан со останатите.<br/><strong>Тежинско кластерирање</strong>
+                        кажува дали соседните канали формираат
+                        тесно поврзана локална група.</p>
+                      <p><strong>Главен резултат:</strong> Функционалната поврзаност кај AD не се
+                        менува подеднакво низ сите EEG канали. Кај некои региони, како O2 и T6,
+                        врските се посилни, додека кај други, како F7 и F4, се послаби. Ова укажува
+                        на регионална промена во организацијата на мозочната мрежа, а не на едноставно
+                        глобално зголемување или намалување на поврзаноста.</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -572,30 +649,37 @@ export default function Home() {
                   </CardHeader>
                   <CardContent>
                     <img
-                      src="/results/connectivity_node_strength.png"
-                      alt="Ефекти на јачината на јазолот по EEG канал"
+                        src="/results/connectivity_node_strength.png"
+                        alt="Ефекти на јачината на јазолот по EEG канал"
                     />
                     <div className="mt-4 text-sm leading-6 text-slate-600">
-                      <strong>Како се чита графикот?</strong> Секоја колона е еден
-                      EEG канал. Црвено и позитивен број значат поголема јачина на
-                      врските кај AD; сино и негативен број значат поголема јачина
-                      кај CN. Ѕвездичката означува статистички значајна разлика.
-                      Најсилен позитивен ефект има O2 (+0,69), а најсилен негативен
-                      ефект F7 (−0,55).
+                      <p className="mb-2">Секоја колона е еден
+                        EEG канал. Црвено и позитивен број значат поголема јачина на
+                        врските кај AD; сино и негативен број значат поголема јачина
+                        кај CN. Ѕвездичката означува статистички значајна разлика.
+                        Најсилен позитивен ефект има O2 (+0,69), а најсилен негативен
+                        ефект F7 (−0,55).</p>
+                      <br/>
+                      <hr/>
+                      <p className="mt-6">Некои EEG канали имаат посилни врски кај AD, а други имаат
+                        посилни врски кај здравите испитаници. Значи, Алцхајмеровата
+                        болест не е поврзана со едноставно зголемување или намалување
+                        на поврзаноста низ целиот мозок, туку со различни промени во
+                        различни региони.</p>
                     </div>
                   </CardContent>
                 </Card>
               </div>
-              <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950">
+              <div
+                  className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950">
                 <div className="flex gap-3">
-                  <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600" />
+                  <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-600"/>
                   <p>
-                    <strong>Толкувајте внимателно.</strong> Pearson анализата на
-                    биомаркерите за поврзаност користи апсолутни тежини на ребрата
-                    со праг на највисоките 30%. Таа открива регионални разлики во
-                    јачината и топологијата на врските, но не може да разликува
-                    позитивни од негативни корелации во оригиналниот референтен
-                    збир на податоци.
+                    <strong>Толкување на Pearson поврзаноста:</strong> Анализата ги зема предвид апсолутните
+                    јачини на врските и ги задржува најсилните 30%. На овој начин се откриваат регионални
+                    разлики во јачината и организацијата на функционалната поврзаност меѓу AD и CN.
+                    Бидејќи се користат апсолутни вредности, анализата ја опишува силата на врската,
+                    без разлика дали оригиналната Pearson корелација била позитивна или негативна.
                   </p>
                 </div>
               </div>
@@ -603,214 +687,84 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="validation" className="scroll-mt-24">
-          <div className="mb-5">
-            <p className="eyebrow">Детали за вкрстената валидација</p>
-            <h2>Резултати на Pearson моделот по поделба</h2>
-            <p className="section-copy">
-              За секоја поделба, прагот е избран само според валидациските
-              податоци со индексот Youden J, а потоа е применет врз испитаниците
-              издвоени за тестирање.
-            </p>
-          </div>
-          <Card>
-            <CardContent className="pt-1">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[720px] text-sm">
-                  <thead>
-                    <tr className="border-b text-left text-xs uppercase tracking-wide text-slate-500">
-                      {[
-                        'Поделба',
-                        'Најдобра епоха',
-                        'Праг',
-                        'Точност',
-                        'F1',
-                        'ROC–AUC',
-                        'Тест-испитаници',
-                      ].map((x) => (
-                        <th key={x} className="px-4 py-3">
-                          {x}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {folds.map((x) => (
-                      <tr
-                        key={x.fold}
-                        className="border-b border-slate-100 last:border-0"
-                      >
-                        <td className="px-4 py-3 font-semibold">{x.fold}</td>
-                        <td className="px-4 py-3">{x.epoch}</td>
-                        <td className="px-4 py-3 font-mono">
-                          {x.threshold.toFixed(3)}
-                        </td>
-                        <td className="px-4 py-3">{pct(x.accuracy)}</td>
-                        <td className="px-4 py-3">{x.f1.toFixed(3)}</td>
-                        <td className="px-4 py-3">{x.auc.toFixed(3)}</td>
-                        <td className="px-4 py-3">13</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-          <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-5 text-sm leading-6 text-blue-950">
-            <strong>Зошто има пет поделби?</strong> Испитаниците се делат на пет
-            делови. Моделот петпати се тренира одново: секојпат учи од четири
-            делови, а се тестира на преостанатиот дел. Така секој испитаник е
-            тестиран еднаш со модел што претходно не ги видел неговите податоци.
-            Разликите меѓу редовите покажуваат дека резултатот зависи и од тоа кои
-            лица се нашле во конкретната тест-група.
-          </div>
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <div className="mini-callout">
-              <span>Просечна точност</span>
-              <strong>0.754 ± 0.102</strong>
-            </div>
-            <div className="mini-callout">
-              <span>Просечен F1 резултат</span>
-              <strong>0.775 ± 0.088</strong>
-            </div>
-            <div className="mini-callout">
-              <span>Просечен ROC–AUC</span>
-              <strong>0.809 ± 0.121</strong>
-            </div>
-          </div>
-        </section>
-
-        <section id="methodology" className="scroll-mt-24">
-          <div className="mb-5">
-            <p className="eyebrow">Методологија</p>
-            <h2>Од EEG снимка до научен доказ</h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-5">
-            {[
-              [
-                '01',
-                'Претпроцесирање',
-                '0,5–45 Hz, просечна референца, епохи од 4 секунди',
-              ],
-              [
-                '02',
-                'Карактеристики на јазол',
-                'Релативна делта, тета, алфа и бета моќност',
-              ],
-              [
-                '03',
-                'Ребра на графот',
-                'Најсилни 30% Pearson, Spearman или кохерентни врски',
-              ],
-              [
-                '04',
-                'GCN по испитаник',
-                'Просечна AD веројатност низ сите епохи на пациентот',
-              ],
-              [
-                '05',
-                'Евалуација',
-                'Петкратна валидација по испитаник, без мешање податоци меѓу поделбите',
-              ],
-            ].map(([n, t, d]) => (
-              <div className="step-card" key={n}>
-                <span>{n}</span>
-                <h3>{t}</h3>
-                <p>{d}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-6 grid gap-5 md:grid-cols-2">
-            <Card>
+        <section id="conclusion" className="scroll-mt-24 rounded-3xl bg-[#0b2531] p-7 text-white sm:p-10">
+          <p className="eyebrow text-teal-300">Заклучок</p>
+          <h2 className="max-w-3xl text-white">
+            Што покажаа резултатите?
+          </h2>
+          <p className="mt-4 max-w-4xl text-base leading-7 text-slate-300">
+            Анализата покажа јасни спектрални и регионални разлики меѓу AD и CN. Кај AD се забележуваат намалена
+            алфа-моќност и зголемен однос тета/алфа, особено во задните EEG канали. Разлики се забележуваат
+            и во функционалната поврзаност, но тие не се еднакво распределени низ сите региони. GCN моделот
+            успешно ги користи овие информации за разликување на двете групи, со резултати над случајното
+            ниво, но потребна е дополнителна валидација на поголеми и независни примероци.
+          </p>
+          <div className="mt-7 grid gap-5 md:grid-cols-2">
+            <Card className="border-teal-300/20 bg-teal-300/[.06] text-white shadow-none ring-1 ring-white/10">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle2 className="size-5 text-teal-600" />
-                  Применети заштитни мерки
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <CheckCircle2 className="size-5 text-teal-300"/>
+                  Мерки за спречување пристрасност и data leakage
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="clean-list">
+                <ul className="clean-list conclusion-list [&_li::before]:bg-teal-300">
                   <li>Сите епохи од еден пациент остануваат во иста поделба</li>
-                  <li>При тренирањето, секој испитаник има еднаква тежина</li>
+                  <li>При тренирањето, секој испитаник има еднаква тежина (еден пациент да нема поголемо влијание само поради поголем број епохи)</li>
                   <li>Рано запирање според валидациската загуба</li>
                   <li>Прагот за одлука е избран без тест-податоци</li>
-                  <li>Секој испитаник добива точно едно тест-предвидување од модел што не бил трениран со неговите податоци</li>
+                  <li>Секој испитаник добива точно едно тест-предвидување од модел што не бил трениран со неговите
+                    податоци
+                  </li>
                   <li>FDR корекција за повеќекратни биомаркерски тестови</li>
                 </ul>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-amber-300/20 bg-amber-300/[.06] text-white shadow-none ring-1 ring-white/10">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="size-5 text-amber-600" />
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <AlertTriangle className="size-5 text-amber-300"/>
                   Ограничувања
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="clean-list">
-                  <li>Мал примерок од еден збир на податоци: 65 испитаници</li>
-                  <li>Нема валидација на надворешна кохорта</li>
-                  <li>Односите може да се нестабилни при многу мала алфа-моќност</li>
+                <ul className="clean-list conclusion-list [&_li::before]:bg-amber-300">
+                  <li>Ограничен примерок: 65 испитаници</li>
+                  <li>Нема надворешна валидација: моделот сè уште не е тестиран на независна кохорта од друг извор или студија.</li>
                   <li>Прагот за поврзаност е фиксиран на најсилните 30%</li>
                   <li>
-                    Тековните резултати се истражувачки, а не клинички
-                    дијагностички систем
-                  </li>
-                  <li>
-                    Основниот модел сè уште треба да се оцени со истата
-                    петкратна вкрстена валидација
+                    Истражувачки карактер на резултатите: добиените резултати покажуваат потенцијал за разликување на AD и CN, но не претставуваат клинички дијагностички систем.
                   </li>
                 </ul>
               </CardContent>
             </Card>
           </div>
-        </section>
-
-        <section className="rounded-3xl bg-[#0b2531] p-7 text-white sm:p-10">
-          <p className="eyebrow text-teal-300">Општ заклучок</p>
-          <h2 className="max-w-3xl text-white">
-            Репродуцибилен сигнал, со јасни ограничувања
-          </h2>
-          <p className="mt-4 max-w-4xl text-base leading-7 text-slate-300">
-            GCN на ниво на испитаник ги раздвојува AD и CN подобро од случајност,
-            додека постериорното намалување на алфа-моќноста и зголемениот однос
-            тета/алфа ги даваат најјасните qEEG докази. Разликите во поврзаноста
-            се регионално информативни, особено околу O2, T5/T6 и F7, но промената
-            на конструкцијата на ребрата не го подобрува значително ROC–AUC.
-            Резултатите оправдуваат понатамошна валидација, не клиничка примена.
-          </p>
           <div className="mt-7 grid gap-4 md:grid-cols-3">
             <div className="rounded-2xl bg-white/[.07] p-5 ring-1 ring-white/10">
-              <h3 className="font-semibold text-teal-200">1. Има ли qEEG разлики?</h3>
+              <h3 className="font-semibold text-teal-200">1. Кои спектрални разлики се забележуваат?</h3>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                Да. Кај AD се забележува помала алфа активност и поголем однос
-                тета/алфа, најмногу во задните канали O1, O2, T5 и T6.
+               Кај AD се забележува пониска алфа-моќност и повисок однос тета/алфа, што укажува на позабавена
+                EEG активност. Разликите се најизразени во задните канали, особено O1, O2, T5 и T6.
               </p>
             </div>
             <div className="rounded-2xl bg-white/[.07] p-5 ring-1 ring-white/10">
-              <h3 className="font-semibold text-teal-200">2. Има ли разлики во поврзаноста?</h3>
+              <h3 className="font-semibold text-teal-200">2. Како се менува функционалната поврзаност? </h3>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                Да, но тие се повеќе регионални отколку глобални. Најизразени се
-                околу O2, T5/T6, F7 и F4.
+                Разликите се регионални, а не еднообразни низ целиот мозок. Одредени канали, како O2 и T6, покажуваат посилни врски кај AD, додека кај други, како F7 и F4, поврзаноста е послаба.
               </p>
             </div>
             <div className="rounded-2xl bg-white/[.07] p-5 ring-1 ring-white/10">
-              <h3 className="font-semibold text-teal-200">3. Може ли GCN да ги разликува групите?</h3>
+              <h3 className="font-semibold text-teal-200">3. Колку успешно GCN ги разликува AD и CN?</h3>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                Да, со умерена успешност. Најдобрата точност е 78,5%, што е
-                подобро од случајно погодување, но не е доволно за клиничка употреба.
+                GCN покажува умерена способност за разликување на двете групи и постигнува резултати јасно над случајното погодување. Сепак, тековните резултати се истражувачки и треба да се потврдат на поголем и независен примерок.
               </p>
             </div>
           </div>
         </section>
       </div>
       <footer className="border-t bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-xs text-slate-500 sm:flex-row sm:justify-between lg:px-8">
-          <span>Граф-базирана EEG анализа за Алцхајмерова болест</span>
-          <span>
-            Создадено од проверени проектни резултати · 65 набљудувања на ниво
-            на испитаник
-          </span>
+        <div
+            className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-xs text-slate-500 sm:flex-row sm:justify-between lg:px-8">
         </div>
       </footer>
     </main>
