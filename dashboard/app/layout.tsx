@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'EEG–AD истражувачка контролна табла',
+  title: 'Граф-базирана EEG анализа на Алцхајмерова болест',
   description: 'GCN резултати и анализа на EEG биомаркери за Алцхајмерова болест на ниво на испитаник.',
 };
 
