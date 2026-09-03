@@ -1,6 +1,6 @@
 """
-Subject-wise train/test split осигурува дека епохи (графови) од
-ИСТ субјект никогаш не се појавуваат и во train и во test истовремено
+Subject-wise train/test split ensures that epochs (graphs) from the
+SAME subject never appear in train and test at the same time.
 """
 
 import torch
@@ -17,12 +17,12 @@ def load_graphs(filename="all_graphs.pt"):
 
 def get_unique_subjects(graphs):
     """
-    Извлекува листа од уникатни субјекти + нивните лабели
+    Extract a list of unique subjects and their labels.
 
-    Враќа
-    -----
+    Returns
+    -------
     subject_ids : list[str]
-    subject_labels : list[int]  (паралелна листа, иста должина)
+    subject_labels : list[int]  (parallel list, same length)
     """
     seen = {}
     for g in graphs:
@@ -35,12 +35,11 @@ def get_unique_subjects(graphs):
 
 def subject_wise_train_test_split(graphs, test_size=0.2, random_state=None):
     """
-    Ги дели графовите во train/test, на ниво на СУБЈЕКТ (не на ниво
-    на епоха), со stratify за да се задржи истиот AD/CN сооднос во
-    двете групи
+    Split graphs into train/test at SUBJECT level (not epoch level),
+    using stratification to preserve the same AD/CN ratio in both groups.
 
-    Враќа
-    -----
+    Returns
+    -------
     train_graphs : list
     test_graphs : list
     """
@@ -65,8 +64,8 @@ def subject_wise_train_test_split(graphs, test_size=0.2, random_state=None):
 
 def verify_no_leakage(train_graphs, test_graphs):
     """
-    Проверка: осигурува дека НИТУ ЕДЕН субјект не се појавува
-    и во train и во test. Ако има leakage, ќе фрли грешка
+    Check that NO subject appears in both train and test.
+    If leakage exists, raise an error.
     """
     train_subjects = set(g.subject_id for g in train_graphs)
     test_subjects = set(g.subject_id for g in test_graphs)
@@ -83,21 +82,21 @@ def verify_no_leakage(train_graphs, test_graphs):
 
 def subject_wise_kfold(graphs, n_splits=5, random_state=None):
     """
-    K-fold cross-validation на ниво на субјект (наместо еднократен
-    train/test split). Корисно за подобра и поробустна евалуација
-    на мал датасет (65 субјекти)
+    Subject-level K-fold cross-validation instead of a single
+    train/test split. Useful for a better and more robust evaluation
+    on a small dataset (65 subjects).
 
-    Враќа
-    -----
-    generator - секој елемент е (train_graphs, test_graphs) за еден fold
+    Returns
+    -------
+    generator - each element is (train_graphs, test_graphs) for one fold
     """
     random_state = random_state or config.RANDOM_SEED
     subject_ids, subject_labels = get_unique_subjects(graphs)
 
     sgkf = StratifiedGroupKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
 
-    # StratifiedGroupKFold бара X, y, groups - овде секој субјект е
-    # своја група (group), не секој граф поединечно
+    # StratifiedGroupKFold requires X, y, and groups. Here each subject is
+    # its own group, not each graph individually.
     dummy_X = subject_ids
     for train_idx, test_idx in sgkf.split(dummy_X, subject_labels, groups=subject_ids):
         train_subjects = set(subject_ids[i] for i in train_idx)

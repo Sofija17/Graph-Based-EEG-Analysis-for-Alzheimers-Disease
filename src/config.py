@@ -1,6 +1,6 @@
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent   # src/ -> project root
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_RAW = PROJECT_ROOT / "data" / "raw" / "ds004504"
 DATA_PROCESSED = PROJECT_ROOT / "data" / "processed"
 DATA_GRAPHS = PROJECT_ROOT / "data" / "graphs"
@@ -33,7 +33,7 @@ CONNECTIVITY_METHOD = "pearson"
 TOP_K_EDGES = 0.3
 
 # --- Group labels ---
-GROUP_MAP = {"A": 1, "C": 0}   # AD = 1, Control = 0 (F = FTD, се исклучува)
+GROUP_MAP = {"A": 1, "C": 0}   # AD = 1, Control = 0 (F = FTD, excluded)
 
 # --- GCN hyperparameters ---
 GCN_HIDDEN_DIM = 32

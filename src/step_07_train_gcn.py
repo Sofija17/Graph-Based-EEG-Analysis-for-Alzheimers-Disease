@@ -1,6 +1,6 @@
 """
-Training loop за GCN моделот - вчитува графови, ги дели subject-wise,
-тренира и печати прогрес на секои неколку епохи.
+Training loop for the GCN model: load graphs, split them subject-wise,
+train the model, and print progress every few epochs.
 """
 
 import torch
@@ -12,19 +12,19 @@ from models.gcn import GCN
 
 
 def train_one_epoch(model, loader, optimizer, criterion, device):
-    """Еден целосен помин низ train податоците (сите batch-ови)."""
-    model.train()  # ставаме модел во "training режим" (важно за некои слоеви)
+    """One full pass through the training data (all batches)."""
+    model.train()  # put the model in training mode (important for some layers)
     total_loss = 0
 
     for batch in loader:
         batch = batch.to(device)
 
-        optimizer.zero_grad()  # бришеме стари градиенти од претходниот batch
+        optimizer.zero_grad()  # clear old gradients from the previous batch
         out = model(batch.x, batch.edge_index, batch.edge_attr, batch.batch)
         loss = criterion(out, batch.y)
 
-        loss.backward()   # пресметува градиенти
-        optimizer.step()  # ги ажурира тежините на моделот
+        loss.backward()   # compute gradients
+        optimizer.step()  # update model weights
 
         total_loss += loss.item() * batch.num_graphs
 
@@ -32,16 +32,16 @@ def train_one_epoch(model, loader, optimizer, criterion, device):
 
 
 def evaluate_accuracy(model, loader, device):
-    """Пресметува accuracy на моделот"""
+    """Compute model accuracy."""
     model.eval()
     correct = 0
     total = 0
 
-    with torch.no_grad():  # не ни требаат градиенти при евалуација
+    with torch.no_grad():  # gradients are not needed during evaluation
         for batch in loader:
             batch = batch.to(device)
             out = model(batch.x, batch.edge_index, batch.edge_attr, batch.batch)
-            preds = out.argmax(dim=1)  # избери ја класата со најголема веројатност
+            preds = out.argmax(dim=1)  # choose the class with the highest probability
             correct += (preds == batch.y).sum().item()
             total += batch.num_graphs
 
@@ -66,7 +66,7 @@ def main():
     model = GCN(num_node_features=num_node_features).to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LEARNING_RATE)
-    criterion = torch.nn.CrossEntropyLoss()  # стандарден loss за класификација
+    criterion = torch.nn.CrossEntropyLoss()  # standard classification loss
 
     # --- Training loop ---
     print("Почнува тренирање...\n")

@@ -1,6 +1,6 @@
 """
-Вчитува participants.tsv и подготвува листа на (subject_id, label)
-парови за AD vs CN класификација (FTD субјектите се исклучуваат)
+Load participants.tsv and prepare a list of (subject_id, label)
+pairs for AD vs CN classification (FTD subjects are excluded).
 """
 
 import pandas as pd
@@ -14,12 +14,12 @@ def load_participants():
 
 def get_ad_cn_subjects():
     """
-    Филтрира само AD (Group='A') и CN (Group='C') субјекти,
-    ги исфрла FTD (Group='F') субјектите.
+    Keep only AD (Group='A') and CN (Group='C') subjects,
+    excluding FTD (Group='F') subjects.
 
-    Враќа
-    -----
-    list од tuples: [(subject_id, label), ...]
+    Returns
+    -------
+    list of tuples: [(subject_id, label), ...]
     label: 0 = CN (Healthy Control), 1 = AD (Alzheimer's Disease)
     """
     df = load_participants()

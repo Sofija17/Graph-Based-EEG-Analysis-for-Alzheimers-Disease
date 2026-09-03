@@ -10,8 +10,8 @@
 #     if has_nan or has_inf:
 #         nan_graphs.append(g.subject_id)
 #
-# print(f"Вкупно проблематични графови: {len(nan_graphs)} од {len(graphs)}")
-# print(f"Засегнати субјекти: {set(nan_graphs)}")
+# print(f"Total problematic graphs: {len(nan_graphs)} out of {len(graphs)}")
+# print(f"Affected subjects: {set(nan_graphs)}")
 
 import torch
 from step_06_split_graph_dataset import load_graphs

@@ -1,9 +1,9 @@
 """
-Гради PyTorch Geometric Data објекти (графови) од:
-  - node features (delta/theta/alpha/beta power по канал)
-  - connectivity матрица (Pearson correlation, веќе threshold-ирана)
+Build PyTorch Geometric Data objects (graphs) from:
+  - node features (delta/theta/alpha/beta power per channel)
+  - connectivity matrix (Pearson correlation, already thresholded)
 
-Секоја епоха -> еден граф.
+Each epoch -> one graph.
 """
 
 import numpy as np
@@ -15,20 +15,20 @@ import config
 
 def connectivity_matrix_to_edge_list(conn_matrix):
     """
-    Ја конвертира квадратната connectivity матрица (n_channels x n_channels)
-    во PyG формат: edge_index + edge_attr.
+    Convert the square connectivity matrix (n_channels x n_channels)
+    into PyG format: edge_index + edge_attr.
 
-    Земаме само не-нула вредности (веќе threshold-ирани надвор од
-    оваа функција), и ги игнорираме self-loops (дијагоналата)
-    Параметри
-    ---------
-    conn_matrix : np.ndarray, облик (n_channels, n_channels)
-                  веќе threshold-ирана (повеќето вредности се 0)
+    Use only non-zero values (already thresholded outside this function)
+    and ignore self-loops (the diagonal).
+    Parameters
+    ----------
+    conn_matrix : np.ndarray, shape (n_channels, n_channels)
+                  already thresholded (most values are 0)
 
-    Враќа
-    -----
-    edge_index : torch.Tensor, облик (2, n_edges)
-    edge_attr : torch.Tensor, облик (n_edges,)
+    Returns
+    -------
+    edge_index : torch.Tensor, shape (2, n_edges)
+    edge_attr : torch.Tensor, shape (n_edges,)
     """
     n_channels = conn_matrix.shape[0]
 
@@ -39,17 +39,15 @@ def connectivity_matrix_to_edge_list(conn_matrix):
     for i in range(n_channels):
         for j in range(n_channels):
             if i == j:
-                continue  # прескокнуваме self-loops
+                continue  # skip self-loops
             if conn_matrix[i, j] != 0:
                 sources.append(i)
                 targets.append(j)
-                # Земаме апсолутна вредност: за јачина на функционална
-                # конективност, важна е магнитудата на корелацијата, не
-                # насоката. Дополнителна причина: GCNConv интерно прави
-                # нормализација со квадратен корен од "степенот" на секој
-                # јазол - негативни тежини можат да дадат негативен степен
-                # -> sqrt(негативен број) -> NaN. Апсолутна вредност го
-                # спречува ова.
+                # Use the absolute value: for functional connectivity strength,
+                # the correlation magnitude matters, not its direction/sign.
+                # Also, GCNConv internally normalizes using the square root of
+                # each node degree. Negative weights can produce a negative
+                # degree -> sqrt(negative number) -> NaN. Absolute values avoid this.
                 signed_weights.append(conn_matrix[i, j])
 
     edge_index = torch.tensor([sources, targets], dtype=torch.long)
@@ -61,22 +59,22 @@ def connectivity_matrix_to_edge_list(conn_matrix):
 
 def build_graph_for_epoch(node_features, conn_matrix, label):
     """
-    Гради ЕДЕН PyG Data граф, за една епоха.
+    Build ONE PyG Data graph for one epoch.
 
-    Параметри
-    ---------
-    node_features : np.ndarray, облик (n_channels, n_bands)
-                     пр. (19, 4) - delta/theta/alpha/beta по канал,
-                     за оваа конкретна епоха
-    conn_matrix : np.ndarray, облик (n_channels, n_channels)
-                   веќе threshold-ирана connectivity матрица,
-                   за оваа иста епоха
+    Parameters
+    ----------
+    node_features : np.ndarray, shape (n_channels, n_bands)
+                     e.g. (19, 4) - delta/theta/alpha/beta per channel,
+                     for this specific epoch
+    conn_matrix : np.ndarray, shape (n_channels, n_channels)
+                   already-thresholded connectivity matrix,
+                   for the same epoch
     label : int
              0 = Healthy Control, 1 = Alzheimer's Disease
 
-    Враќа
-    -----
-    torch_geometric.data.Data објект
+    Returns
+    -------
+    torch_geometric.data.Data object
     """
     x = torch.tensor(node_features, dtype=torch.float)
     edge_index, edge_attr, signed_edge_attr = connectivity_matrix_to_edge_list(conn_matrix)
@@ -94,21 +92,21 @@ def build_graph_for_epoch(node_features, conn_matrix, label):
 
 def build_graphs_for_subject(feature_matrix, conn_matrices, label):
     """
-    Гради графови за СИТЕ епохи на еден субјект.
+    Build graphs for ALL epochs of one subject.
 
-    Параметри
-    ---------
-    feature_matrix : np.ndarray, облик (n_epochs, n_channels, n_bands)
-                       пр. (149, 19, 4)
-    conn_matrices : np.ndarray, облик (n_epochs, n_channels, n_channels)
-                      веќе threshold-ирани, пр. (149, 19, 19)
+    Parameters
+    ----------
+    feature_matrix : np.ndarray, shape (n_epochs, n_channels, n_bands)
+                       e.g. (149, 19, 4)
+    conn_matrices : np.ndarray, shape (n_epochs, n_channels, n_channels)
+                      already thresholded, e.g. (149, 19, 19)
     label : int
-             0 = HC, 1 = AD - ИСТА лабела за сите епохи на овој субјект
-             (бидејќи лабелата е на ниво на субјект, не на ниво на епоха)
+             0 = HC, 1 = AD - SAME label for all epochs of this subject
+             (because the label is subject-level, not epoch-level)
 
-    Враќа
-    -----
-    list од torch_geometric.data.Data објекти, должина = n_epochs
+    Returns
+    -------
+    list of torch_geometric.data.Data objects, length = n_epochs
     """
     n_epochs = feature_matrix.shape[0]
     graphs = []
@@ -146,7 +144,7 @@ if __name__ == "__main__":
         for i in range(conn_all.shape[0])
     ])
 
-    # Градење графови (пример: label=1, како да е AD субјект)
+    # Build graphs (example: label=1, as if this is an AD subject)
     graphs = build_graphs_for_subject(feature_matrix, conn_all_thresholded, label=1)
 
     print(f"Направени {len(graphs)} графови за субјект {test_subject}")

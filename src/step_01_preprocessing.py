@@ -1,7 +1,6 @@
 """
-Функции за вчитување на веќе-прочистени (derivatives/) EEG записи
-и нивно сегментирање во кратки епохи (сегменти).
-
+Functions for loading already-cleaned (derivatives/) EEG recordings
+and segmenting them into short epochs.
 """
 
 import mne
@@ -11,19 +10,19 @@ from helpers.load_participants import get_ad_cn_subjects
 
 def load_subject_raw(subject_id, use_derivatives=True):
     """
-    Вчитува еден EEG запис (непроцесиран).
+    Load one EEG recording.
 
-    Параметри
-    ---------
+    Parameters
+    ----------
     subject_id : str
-        пр. "sub-001"
+        Example: "sub-001"
     use_derivatives : bool
-        True = користи derivatives/ (веќе прочистена верзија)
-        False = користи raw/ (сурова верзија)
+        True = use derivatives/ (already-cleaned version)
+        False = use raw/ (raw version)
 
-    Враќа
-    -----
-    mne.io.Raw објект
+    Returns
+    -------
+    mne.io.Raw object
     """
     base = config.DATA_RAW / "derivatives" if use_derivatives else config.DATA_RAW
 
@@ -37,19 +36,19 @@ def load_subject_raw(subject_id, use_derivatives=True):
 
 def epoch_raw(raw, duration=None, overlap=None):
     """
-    Сегментира continuous EEG сигнал во кратки сегмемти со фиксна должина.
+    Segment a continuous EEG signal into short fixed-length epochs.
 
-    Параметри
-    ---------
+    Parameters
+    ----------
     raw : mne.io.Raw
     duration : float
-        должина на секоја епоха во секунди (default: config.EPOCH_DURATION)
+        length of each epoch in seconds (default: config.EPOCH_DURATION)
     overlap : float
-        преклопување меѓу епохи во секунди (default: config.EPOCH_OVERLAP)
+        overlap between epochs in seconds (default: config.EPOCH_OVERLAP)
 
-    Враќа
-    -----
-    mne.Epochs објект
+    Returns
+    -------
+    mne.Epochs object
     """
     duration = duration or config.EPOCH_DURATION
     overlap = overlap if overlap is not None else config.EPOCH_OVERLAP
@@ -78,11 +77,11 @@ def epoch_raw(raw, duration=None, overlap=None):
 
 def load_and_epoch_subject(subject_id, use_derivatives=True):
     """
-    Комбинирана функција: вчитува + epoch-ира еден субјект во еден чекор.
+    Combined helper: load and epoch one subject in a single step.
 
-    Враќа
-    -----
-    mne.Epochs објект
+    Returns
+    -------
+    mne.Epochs object
     """
     raw = load_subject_raw(subject_id, use_derivatives=use_derivatives)
     epochs = epoch_raw(raw)

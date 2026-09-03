@@ -1,41 +1,41 @@
 """
-Epoch-level GCN со SUBJECT-LEVEL финална класификација,
-5-fold subject-wise cross-validation и early stopping
+Epoch-level GCN with SUBJECT-LEVEL final classification,
+5-fold subject-wise cross-validation, and early stopping.
 
 Pipeline:
 
     EEG subject
-        ↓
-    повеќе 4-sec EEG сегменти
-        ↓
-    еден graph по сегмент
-        ↓
-    GCN -> P(AD) за секој сегмент
-        ↓
-    mean P(AD) по subject
-        ↓
-    една финална AD/CN prediction
+        ->
+    multiple 4-second EEG segments
+        ->
+    one graph per segment
+        ->
+    GCN -> P(AD) for each segment
+        ->
+    mean P(AD) per subject
+        ->
+    one final AD/CN prediction
 
-Во секој fold:
+In each fold:
 
     development subjects
-        ↓
+        ->
     train + validation
-        ↓
+        ->
     train GCN
-        ↓
-    следење validation loss
-        ↓
+        ->
+    monitor validation loss
+        ->
     early stopping
-        ↓
+        ->
     restore best model
-        ↓
+        ->
     test subjects
-        ↓
+        ->
     subject-level prediction
 
-ВАЖНО:
-Сите сегменти од еден subject секогаш се во исто множество
+IMPORTANT:
+All segments from one subject always remain in the same split.
 """
 
 from collections import defaultdict
@@ -87,12 +87,12 @@ VAL_SIZE = 0.20
 
 EARLY_STOPPING_PATIENCE = 15
 
-# Колку најмалку треба да се подобри validation loss
-# за да го сметаме за реално подобрување.
+# Minimum required validation loss improvement
+# to count as a real improvement.
 MIN_DELTA = 0.0001
 
-# config.NUM_EPOCHS сега е MAXIMUM број на epochs.
-# Early stopping може да запре порано.
+# config.NUM_EPOCHS is now the MAXIMUM number of epochs.
+# Early stopping may stop training earlier.
 
 
 # ============================================================
@@ -120,10 +120,10 @@ def subject_wise_train_validation_split(
     random_state=None
 ):
     """
-    Ги дели development графовите на train и validation
-    на ниво на SUBJECT.
+    Split development graphs into train and validation
+    at SUBJECT level.
 
-    Сите сегменти од еден subject остануваат заедно.
+    All segments from one subject remain together.
     """
 
     if random_state is None:
@@ -162,11 +162,12 @@ def subject_wise_train_validation_split(
 
 def attach_subject_balanced_weights(graphs):
     """
-    Додава sample_weight на секој graph така што секој subject има
-    приближно еднаков вкупен придонес во loss-от.
+    Add sample_weight to every graph so each subject has
+    approximately equal total contribution to the loss.
 
-    Без ова, subject со 300 сегменти влијае околу 4x повеќе од subject
-    со 75 сегменти, иако реално имаме една label-а по subject.
+    Without this, a subject with 300 segments has about 4x more influence
+    than a subject with 75 segments, even though there is only one real
+    label per subject.
     """
 
     subject_counts = defaultdict(int)
@@ -206,7 +207,7 @@ def train_one_epoch(
     device
 ):
     """
-    Еден целосен training epoch.
+    One full training epoch.
     """
 
     model.train()
@@ -265,9 +266,9 @@ def evaluate_loss(
     device
 ):
     """
-    Го пресметува loss без ажурирање на weights.
+    Compute loss without updating weights.
 
-    Ова го користиме за validation set.
+    This is used for the validation set.
     """
 
     model.eval()
@@ -317,7 +318,7 @@ def evaluate_segment_level(
     device
 ):
     """
-    Евалуација на ниво на EEG сегмент / graph.
+    Evaluation at EEG segment / graph level.
     """
 
     model.eval()
@@ -393,10 +394,10 @@ def evaluate_subject_level(
     threshold=0.5
 ):
     """
-    За секој segment graph:
+    For each segment graph:
         GCN -> P(AD)
 
-    Потоа ги групираме според subject_id:
+    Then group the probabilities by subject_id:
 
         mean P(AD) >= threshold -> AD
         mean P(AD) < threshold  -> CN
@@ -491,7 +492,7 @@ def evaluate_subject_level(
                     )
 
     # --------------------------------------------------------
-    # Aggregation по subject
+    # Aggregation by subject
     # --------------------------------------------------------
 
     subject_ids = []
@@ -599,12 +600,12 @@ def evaluate_subject_level(
 
 def choose_threshold_by_youdens_j(labels, probabilities):
     """
-    Избира subject-level threshold користејќи Youden's J:
+    Choose the subject-level threshold using Youden's J:
 
         J = sensitivity + specificity - 1
 
-    Threshold-от се избира само од validation subjects, а потоа се
-    применува еднаш на test subjects.
+    The threshold is selected only from validation subjects and then
+    applied once to test subjects.
     """
 
     labels = np.asarray(labels)
@@ -714,10 +715,9 @@ def plot_losses(
     output_dir=None
 ):
     """
-    Црта train loss и validation loss за секој training epoch.
+    Plot train loss and validation loss for each training epoch.
 
-    Вертикалната линија го покажува epoch-от со
-    најмал validation loss.
+    The vertical line shows the epoch with the lowest validation loss.
     """
 
     epochs = range(
@@ -848,16 +848,16 @@ def train_fold(
     output_dir=None
 ):
     """
-    Еден fold:
+    One fold:
 
         development
-            ↓
+            ->
         train + validation
-            ↓
-        train со early stopping
-            ↓
+            ->
+        train with early stopping
+            ->
         restore best model
-            ↓
+            ->
         test
     """
 
@@ -920,7 +920,7 @@ def train_fold(
         for g in test_graphs
     )
 
-    # Дополнителна безбедносна проверка
+    # Additional safety check
     if train_subjects & test_subjects:
         raise ValueError(
             "Leakage меѓу train и test!"
@@ -1074,7 +1074,7 @@ def train_fold(
         )
 
         # ----------------------------------------------------
-        # Проверка за подобрување
+        # Improvement check
         # ----------------------------------------------------
 
         if (
@@ -1215,7 +1215,7 @@ def train_fold(
     )
 
     # --------------------------------------------------------
-    # TEST - дури сега
+    # TEST - only now
     # --------------------------------------------------------
 
     segment_metrics = (

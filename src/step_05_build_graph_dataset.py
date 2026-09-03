@@ -1,8 +1,7 @@
 """
-Batch скрипта: за секој AD/CN субјект во датасетот, го извршува целиот
+Batch script: for each AD/CN subject in the dataset, run the full
 pipeline (load -> epoch -> features -> connectivity -> graphs)
-ги зачувува СИТЕ графови (од сите субјекти) во еден фајл на диск
-
+and save ALL graphs from all subjects into one file on disk.
 """
 
 import argparse
@@ -24,12 +23,12 @@ from step_04_graph_builder import build_graphs_for_subject
 
 def process_subject(subject_id, label, connectivity_method=None):
     """
-    Го извршува целиот pipeline за ЕДЕН субјект.
+    Run the full pipeline for ONE subject.
 
-    Враќа
-    -----
-    list од PyG Data графови (еден по епоха), или None ако субјектот
-    не можел да се обработи (пр. фајл не постои)
+    Returns
+    -------
+    list of PyG Data graphs (one per epoch), or None if the subject
+    could not be processed (e.g. file does not exist)
     """
     epochs = load_and_epoch_subject(subject_id)
     epochs_data = epochs.get_data()
@@ -51,12 +50,12 @@ def process_subject(subject_id, label, connectivity_method=None):
         for i in range(conn_all.shape[0])
     ])
 
-    # Градење графови
+    # Build graphs
     graphs = build_graphs_for_subject(feature_matrix, conn_all_thresholded, label)
 
-    # Важно: чуваме subject_id во секој граф, ќе ни треба подоцна
-    # за subject-wise train/test split (за да не мешаме епохи од ист
-    # субјект во train и test истовремено)
+    # Important: store subject_id in every graph; it is needed later
+    # for subject-wise train/test splitting so epochs from the same
+    # subject are not mixed into train and test at the same time.
     for g in graphs:
         g.subject_id = subject_id
         g.connectivity_method = connectivity_method
@@ -66,8 +65,8 @@ def process_subject(subject_id, label, connectivity_method=None):
 
 def build_full_dataset(connectivity_method=None):
     """
-    Го извршува process_subject() за СИТЕ AD/CN субјекти со логови
-    за прогрес и враќа еден голем список од сите графови.
+    Run process_subject() for ALL AD/CN subjects with progress logs
+    and return one large list of all graphs.
     """
     subjects = get_ad_cn_subjects()
     connectivity_method = connectivity_method or config.CONNECTIVITY_METHOD

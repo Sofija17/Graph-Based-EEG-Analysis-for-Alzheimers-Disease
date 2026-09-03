@@ -1,18 +1,18 @@
 """
-Пресметка на functional connectivity со Pearson correlation меѓу
-парови на EEG канали за секоја епоха посебно.
+Compute functional connectivity with Pearson correlation between
+pairs of EEG channels for each epoch separately.
 
-Резултат: за секоја епоха, матрица (n_channels x n_channels) каде
-секоја вредност [i, j] покажува колку канал i и канал j се
-"синхронизирани" во тој временски прозорец.
+Result: for each epoch, a matrix (n_channels x n_channels) where
+each value [i, j] shows how synchronized channel i and channel j are
+within that time window.
 
-Правиме ребра меѓу јазлите
+These connectivity values are later used to create edges between nodes.
 """
 import numpy as np
 from scipy.signal import coherence
 from scipy.stats import rankdata
 
-#TODO посебна пресметка според фреквенциски опсег (алфа, бета, гама, делта) / според друга метрика за корелација (PLV)
+# TODO compute connectivity separately by frequency band (alpha, beta, gamma, delta) / use another connectivity metric (PLV)
 SUPPORTED_CONNECTIVITY_METHODS = ("pearson", "spearman", "coherence")
 
 
@@ -24,19 +24,19 @@ def compute_connectivity_matrix(
     fmax=30.0,
 ):
     """
-    Пресметува Pearson correlation матрица за ЕДНА епоха.
+    Compute a connectivity matrix for ONE epoch.
 
-    Параметри
-    ---------
-    epoch_data : np.ndarray, облик (n_channels, n_times)
-                 сурови временски вредности за сите канали, ЕДНА епоха
-                 (пр. epochs.get_data()[0] -> облик (19, 2000))
+    Parameters
+    ----------
+    epoch_data : np.ndarray, shape (n_channels, n_times)
+                 raw time-domain values for all channels, ONE epoch
+                 (e.g. epochs.get_data()[0] -> shape (19, 2000))
 
-    Враќа
-    -----
-    np.ndarray, облик (n_channels, n_channels)
-                симетрична матрица, вредности меѓу -1 и +1,
-                дијагонала = 1.0
+    Returns
+    -------
+    np.ndarray, shape (n_channels, n_channels)
+                symmetric matrix, values between -1 and +1,
+                diagonal = 1.0
     """
     method = method.lower()
     if method not in SUPPORTED_CONNECTIVITY_METHODS:
@@ -83,16 +83,16 @@ def compute_connectivity_all_epochs(
     fmax=30.0,
 ):
     """
-    Пресметува connectivity матрица за СИТЕ епохи одеднаш.
+    Compute connectivity matrices for ALL epochs at once.
 
-    Параметри
-    ---------
-    epochs_data : np.ndarray, облик (n_epochs, n_channels, n_times)
-                  пр. epochs.get_data() -> (149, 19, 2000)
+    Parameters
+    ----------
+    epochs_data : np.ndarray, shape (n_epochs, n_channels, n_times)
+                  e.g. epochs.get_data() -> (149, 19, 2000)
 
-    Враќа
-    -----
-    np.ndarray, облик (n_epochs, n_channels, n_channels)
+    Returns
+    -------
+    np.ndarray, shape (n_epochs, n_channels, n_channels)
     """
     n_epochs = epochs_data.shape[0]
     n_channels = epochs_data.shape[1]
@@ -108,38 +108,38 @@ def compute_connectivity_all_epochs(
 
 def threshold_connectivity(conn_matrix, top_k_percent=0.3):
     """
-    Ги задржува само најсилните врски во connectivity матрицата,
-    ги става на 0 сите послаби (спарс граф - помалку, но посилни edges).
+    Keep only the strongest connections in the connectivity matrix,
+    setting weaker ones to 0 (sparse graph - fewer but stronger edges).
 
-    Параметри
-    ---------
-    conn_matrix : np.ndarray, облик (n_channels, n_channels)
-    top_k_percent : float, пр. 0.3 = задржи топ 30% најсилни врски
+    Parameters
+    ----------
+    conn_matrix : np.ndarray, shape (n_channels, n_channels)
+    top_k_percent : float, e.g. 0.3 = keep the top 30% strongest connections
 
-    Враќа
-    -----
-    np.ndarray, ист облик, но со послабите врски поставени на 0
+    Returns
+    -------
+    np.ndarray, same shape, but weaker connections are set to 0
     """
     n_channels = conn_matrix.shape[0]
 
-    # Работиме со апсолутна вредност бидејќи и силна негативна
-    # корелација е "силна врска" (само во спротивна насока)
+    # Use absolute values because a strong negative correlation is still
+    # a strong connection, only in the opposite direction.
     abs_matrix = np.abs(conn_matrix.copy())
 
-    # Ја игнорираме дијагоналата (секој канал со себе = секогаш 1.0,
-    # не носи корисна информација за connectivity)
+    # Ignore the diagonal (each channel with itself = always 1.0,
+    # which does not add useful connectivity information).
     np.fill_diagonal(abs_matrix, 0)
 
-    # Ги земаме само вредностите над дијагоналата (горниот триаголник)
-    # бидејќи матрицата е симетрична
+    # Use only values above the diagonal (upper triangle)
+    # because the matrix is symmetric.
     upper_indices = np.triu_indices(n_channels, k=1)
     upper_values = abs_matrix[upper_indices]
 
-    # Одредуваме праг: вредноста под која се отфрлаат врските
+    # Determine the cutoff: connections below this value are discarded.
     n_keep = int(len(upper_values) * top_k_percent)
     threshold = np.sort(upper_values)[::-1][n_keep - 1] if n_keep > 0 else 1.0
 
-    # Правиме нова матрица, задржувајќи ги само вредностите над прагот.
+    # Create a new matrix, keeping only values above the cutoff.
     result = conn_matrix.copy()
     mask_to_zero = (abs_matrix < threshold)
     np.fill_diagonal(mask_to_zero, False)
@@ -158,16 +158,16 @@ if __name__ == "__main__":
 
     print("Облик на epochs_data:", epochs_data.shape)
 
-    # Connectivity за само првата епоха
+    # Connectivity for the first epoch only
     conn_single = compute_connectivity_matrix(epochs_data[0])
     print("Connectivity матрица (епоха 0), облик:", conn_single.shape)
     print("Пример - Fp1 corr со сите канали:\n", conn_single[0])
 
-    # Connectivity за сите епохи
+    # Connectivity for all epochs
     conn_all = compute_connectivity_all_epochs(epochs_data)
     print("\nВкупна connectivity матрица, облик:", conn_all.shape)
 
     # Threshold (keep top 30%)
     thresholded = threshold_connectivity(conn_single, top_k_percent=0.3)
-    n_nonzero = np.count_nonzero(thresholded) - 19  # минус дијагоналата
+    n_nonzero = np.count_nonzero(thresholded) - 19  # minus the diagonal
     print(f"\nПо threshold-ирање, останати не-нула врски: {n_nonzero}")

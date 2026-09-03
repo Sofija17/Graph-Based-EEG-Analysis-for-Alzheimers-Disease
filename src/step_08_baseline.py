@@ -1,23 +1,23 @@
 """
-Random Forest baseline за AD vs CN класификација.
+Random Forest baseline for AD vs CN classification.
 
-За фер споредба со GCN:
-    - ги користиме истите графови
-    - го користиме истиот subject-wise train/test split
-    - ги користиме истите qEEG features и thresholded connectivity
+For a fair comparison with GCN:
+    - use the same graphs
+    - use the same subject-wise train/test split
+    - use the same qEEG features and thresholded connectivity
 
-Секој граф (една EEG епоха) го претвораме во еден feature vector:
+Each graph (one EEG epoch) is converted into one feature vector:
 
     node features:
         n_channels × 4 qEEG features
-        пример: 19 × 4 = 76
+        example: 19 × 4 = 76
 
     connectivity:
-        upper triangle од connectivity matrix
-        пример: 19 × 18 / 2 = 171
+        upper triangle of the connectivity matrix
+        example: 19 × 18 / 2 = 171
 
-    вкупно:
-        76 + 171 = 247 features по епоха
+    total:
+        76 + 171 = 247 features per epoch
 """
 
 import numpy as np
@@ -41,14 +41,14 @@ from step_06_split_graph_dataset import (
 
 def graph_to_vector(graph):
     """
-    Претвора еден PyTorch Geometric граф во 1D feature vector.
+    Convert one PyTorch Geometric graph into a 1D feature vector.
 
-    Векторот содржи:
+    The vector contains:
         1. qEEG node features
-        2. connectivity вредности од upper triangle
+        2. connectivity values from the upper triangle
 
-    Враќа
-    -----
+    Returns
+    -------
     numpy.ndarray
         1D feature vector
     """
@@ -59,7 +59,7 @@ def graph_to_vector(graph):
     # graph.x shape:
     # (n_channels, n_features)
     #
-    # пример:
+    # example:
     # (19, 4) -> flatten -> (76,)
     node_features = graph.x.detach().cpu().numpy().flatten()
 
@@ -78,8 +78,8 @@ def graph_to_vector(graph):
     src = edge_index[0]
     dst = edge_index[1]
 
-    # edge_attr може да биде:
-    # shape (E,) или (E, 1)
+    # edge_attr can be:
+    # shape (E,) or (E, 1)
     edge_weights = (
         graph.edge_attr
         .detach()
@@ -91,16 +91,16 @@ def graph_to_vector(graph):
     connectivity[src, dst] = edge_weights
 
     # ---------------------------------------------------------
-    # 3. Земаме само upper triangle
+    # 3. Use only the upper triangle
     # ---------------------------------------------------------
-    # Не ја земаме дијагоналата бидејќи corr(channel, channel) = 1
-    # Не ја земаме долната половина бидејќи Pearson matrix е симетрична
+    # Do not use the diagonal because corr(channel, channel) = 1
+    # Do not use the lower half because the Pearson matrix is symmetric
     upper_indices = np.triu_indices(num_nodes, k=1)
 
     connectivity_features = connectivity[upper_indices]
 
     # ---------------------------------------------------------
-    # 4. Спојување
+    # 4. Concatenation
     # ---------------------------------------------------------
     feature_vector = np.concatenate([
         node_features,
@@ -112,10 +112,10 @@ def graph_to_vector(graph):
 
 def graphs_to_dataset(graphs):
     """
-    Претвора листа од PyG графови во X и y за sklearn.
+    Convert a list of PyG graphs into X and y for sklearn.
 
-    Враќа
-    -----
+    Returns
+    -------
     X : numpy.ndarray
         shape = (n_graphs, n_features)
 
@@ -195,7 +195,7 @@ def main():
     train_predictions = model.predict(X_train)
     test_predictions = model.predict(X_test)
 
-    # probability дека примерот е AD (class=1)
+    # probability that the sample is AD (class=1)
     test_probabilities = model.predict_proba(X_test)[:, 1]
 
     # ---------------------------------------------------------
